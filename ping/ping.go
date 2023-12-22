@@ -4,6 +4,7 @@ import "C"
 import (
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"net"
 	"sync"
 	"time"
@@ -174,6 +175,11 @@ func (m *Manager) AddRequest(ip string, nodeID int64, proto int64) {
 }
 
 func (m *Manager) WaitResult() (*PingResponse, error) {
-	resp := <-m.resp
-	return resp, nil
+	timeout := time.Duration(m.timeout) * time.Millisecond * factor * time.Duration(m.count) * 2
+	select {
+	case <-time.After(timeout):
+		return nil, errors.New("timeout")
+	case resp := <-m.resp:
+		return resp, nil
+	}
 }

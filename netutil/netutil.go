@@ -57,7 +57,7 @@ func isPhysicalInterface(addr string) bool {
 	return false
 }
 
-// Lookup IP address of the given hostname
+// LookupIP address of the given hostname
 func LookupIP(domain string) net.IP {
 	ips, err := net.LookupIP(domain)
 	if err != nil || len(ips) == 0 {
