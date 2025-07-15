@@ -1,3 +1,9 @@
+// Package ping 实现网络ping工具包，主要功能是测试目标服务器的网络连接延迟并计算评分。
+//
+// 评分逻辑
+//   - 基础评分：基于平均延迟计算，延迟越低评分越高（1000ms为基准线）
+//   - 失败惩罚：失败次数越多，评分越低
+//
 package ping
 
 import "C"
@@ -12,6 +18,7 @@ import (
 
 const factor = 2
 
+// ping返回单次连接延迟。
 func ping(url string, timeout int64) (int64, error) {
 	start := time.Now()
 	conn, err := tls.DialWithDialer(&net.Dialer{
@@ -30,11 +37,24 @@ func ping(url string, timeout int64) (int64, error) {
 	return dur, nil
 }
 
+// Result 存储单次ping的结果，包含平均延迟(Ping)和评分(Score)。
 type Result struct {
 	Ping  int64
 	Score float64
 }
 
+// Ping 通过TLS协议连接目标服务器的1443端口，测量网络延迟。
+//
+// 执行多次ping并计算平均值和评分。
+//
+// 参数：
+//  - url：目标服务器的URL，例如 "www.example.com"。
+//  - proto：协议类型，没用到
+//  - timeout：超时时间，单位毫秒。
+//  - count：测试次数。
+//
+// 返回值：
+//  - *Result：测试结果，包含延迟和评分。
 func Ping(url string, proto int64, timeout int64, count int64) *Result {
 	goUrl := url + ":1443"
 
@@ -71,12 +91,14 @@ func Ping(url string, proto int64, timeout int64, count int64) *Result {
 	}
 }
 
+// PingRequest 是ping请求参数，包含目标URL、节点ID和协议。
 type PingRequest struct {
 	Url    string
 	NodeID int64
-	Proto  int64
+	Proto  int64  // 没用到
 }
 
+// PingResponse 是ping响应结果，包含节点ID、URL、延迟和评分。
 type PingResponse struct {
 	NodeID int64
 	Url    string
@@ -84,6 +106,16 @@ type PingResponse struct {
 	Score  float64
 }
 
+// PingMany 并发ping多个目标并返回JSON格式结果。
+//
+// 参数：
+//  - request：包含多个目标的JSON字符串，每个目标包含Url、NodeID和Proto字段。
+//  - timeout：超时时间，单位毫秒。
+//  - count：测试次数。
+//
+// 返回值：
+//  - string：包含多个目标的Ping结果的JSON字符串，每个目标包含NodeID、Url、Ping和Score字段。
+//  - error：如果解析JSON字符串或执行Ping测试失败，返回错误信息。
 func PingMany(request string, timeout int64, count int64) (string, error) {
 	requests := make([]PingRequest, 0)
 	err := json.Unmarshal([]byte(request), &requests)
@@ -115,6 +147,7 @@ func PingMany(request string, timeout int64, count int64) (string, error) {
 	return string(bytes), nil
 }
 
+// Manager 是ping请求管理器，支持并发控制和结果处理。
 type Manager struct {
 	req     chan *PingRequest
 	resp    chan *PingResponse
@@ -123,6 +156,21 @@ type Manager struct {
 	count   int64
 }
 
+// NewManager 创建一个新的Manager实例。
+// Manager提供并发ping请求的管理、配置和结果获取。
+//
+// 参数：
+//  - worker：并发工作线程数。
+//  - timeout：超时时间，单位毫秒。
+//  - count：测试次数。
+//
+// 返回值：
+//  - *Manager：新创建的Manager实例。
+//
+// 注意：
+//  - 该方法会启动工作协程
+//  - 调用AddRequest方法添加目标后，需要调用WaitResult方法等待结果。
+//  - 可以通过SetTimeout和SetCount方法动态调整超时时间和测试次数。
 func NewManager(worker int64, timeout int64, count int64) *Manager {
 	m := new(Manager)
 	m.timeout = timeout
