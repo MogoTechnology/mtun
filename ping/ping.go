@@ -194,6 +194,7 @@ func (m *Manager) Loop() {
 	for {
 		select {
 		case req := <-m.req:
+			// wait 个数到达 worker 个数时，阻塞
 			m.wait <- true
 
 			go func() {
@@ -212,6 +213,16 @@ func (m *Manager) Loop() {
 	}
 }
 
+// AddRequest 添加一个ping请求。
+//
+// 参数：
+//  - ip：目标IP地址。
+//  - nodeID：节点ID。仅用于原样返回。
+//  - proto：协议。没用到。
+//
+// 注意：
+//  - 该方法会异步执行ping请求。
+//  - 调用WaitResult方法等待结果。
 func (m *Manager) AddRequest(ip string, nodeID int64, proto int64) {
 	go func() {
 		m.req <- &PingRequest{
@@ -222,6 +233,11 @@ func (m *Manager) AddRequest(ip string, nodeID int64, proto int64) {
 	}()
 }
 
+// WaitResult 等待请求完成并返回结果。
+//
+// 返回值：
+//  - *PingResponse：请求的结果。
+//  - error：如果超时，返回超时错误。
 func (m *Manager) WaitResult() (*PingResponse, error) {
 	timeout := time.Duration(m.timeout) * time.Millisecond * factor * time.Duration(m.count) * 2
 	select {
