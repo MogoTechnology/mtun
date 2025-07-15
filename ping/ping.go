@@ -48,8 +48,8 @@ type Result struct {
 // 执行多次ping并计算平均值和评分。
 //
 // 参数：
-//  - url：目标服务器的URL，例如 "www.example.com"。
-//  - proto：协议类型，没用到
+//  - url：目标服务器的URL，域名或IP，不带端口号，例如 "www.example.com"。
+//  - proto：协议类型，没用到。
 //  - timeout：超时时间，单位毫秒。
 //  - count：测试次数。
 //
