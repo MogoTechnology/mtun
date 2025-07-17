@@ -73,6 +73,13 @@ func Ping(url string, proto int64, timeout int64, count int64) *Result {
 	if failCount != count {
 		avePing = sumPing / (count - failCount)
 	}
+	return &Result{
+		Ping:  avePing,
+		Score: getScore(count, failCount, avePing),
+	}
+}
+
+func getScore(count int, failCount int, avePing int) float64 {
 	basicScore := float64(1)
 	if avePing < 1000 {
 		if avePing == 0 {
@@ -85,10 +92,7 @@ func Ping(url string, proto int64, timeout int64, count int64) *Result {
 	if failCount != 0 {
 		score = basicScore - (float64(failCount)*2 - 0.5)
 	}
-	return &Result{
-		Ping:  avePing,
-		Score: score,
-	}
+	return score
 }
 
 // PingRequest 是ping请求参数，包含目标URL、节点ID和协议。
