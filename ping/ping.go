@@ -79,7 +79,7 @@ func Ping(url string, proto int64, timeout int64, count int64) *Result {
 	}
 }
 
-func getScore(count int, failCount int, avePing int) float64 {
+func getScore(count int64, failCount int64, avePing int64) float64 {
 	basicScore := float64(1)
 	if avePing < 1000 {
 		if avePing == 0 {
