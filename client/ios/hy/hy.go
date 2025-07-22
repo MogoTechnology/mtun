@@ -3,7 +3,7 @@ package hy
 import (
 	"errors"
 	"fmt"
-	"github.com/apernet/hysteria/core/client"
+	"github.com/apernet/hysteria/core/v2/client"
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
 	"runtime"
 	"runtime/debug"
