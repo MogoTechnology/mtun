@@ -90,6 +90,8 @@ gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c/go.mod h1:JHkPIbrfpd72SG/EV
 gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
 gopkg.in/yaml.v3 v3.0.1 h1:fxVm/GzAzEWqLHuvctI91KS9hhNmmWOoWu0XTYJS7CA=
 gopkg.in/yaml.v3 v3.0.1/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
+gvisor.dev/gvisor v0.0.0-20250721175007-84b38c4b651f h1:Mo/Za1nCjB9OY24QaEReaByu6nTKB0ASISS0BVBjN64=
+gvisor.dev/gvisor v0.0.0-20250721175007-84b38c4b651f/go.mod h1:i8iCZyAdwRnLZYaIi2NUL1gfNtAveqxkKAe0JfAv9Bs=
 gvisor.dev/gvisor v0.0.0-20250722060819-7e87fc325f61 h1:Rym0cm9L1EOQ+cv6KxYdF/1nF0FzmqB8GOqtYbFlsJA=
 gvisor.dev/gvisor v0.0.0-20250722060819-7e87fc325f61/go.mod h1:i8iCZyAdwRnLZYaIi2NUL1gfNtAveqxkKAe0JfAv9Bs=
 rsc.io/qr v0.2.0 h1:6vBLea5/NRMVTz8V66gipeLycZMl/+UlFmk8DvqQ6WY=
