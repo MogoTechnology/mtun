@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/icechen128/mtun/client/ios/hy"
-	"github.com/xjasonlyu/tun2socks/v2/common/pool"
+	"github.com/xjasonlyu/tun2socks/v2/buffer"
 	"golang.zx2c4.com/wireguard/tun"
 	"log"
 	"log/slog"
@@ -41,8 +41,8 @@ type PacketFlow struct {
 }
 
 func (p PacketFlow) ReadPacket() []byte {
-	buf := pool.Get(pool.RelayBufferSize)
-	defer pool.Put(buf)
+	buf := buffer.Get(buffer.RelayBufferSize)
+	defer buffer.Put(buf)
 	var buff = [][]byte{buf}
 	size := make([]int, 1)
 	_, _ = p.device.Read(buff, size, 4)
