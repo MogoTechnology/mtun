@@ -105,8 +105,8 @@ func main() {
 	SetRoute(tunnel.IP+"/16", ifName, "45.76.158.147:2121", "10.20.0.1", false)
 
 	go func() {
-		buf := pool.Get(pool.RelayBufferSize)
-		defer pool.Put(buf)
+		buf := buffer.Get(buffer.RelayBufferSize)
+		defer buffer.Put(buf)
 		var buff = [][]byte{buf}
 		size := make([]int, 1)
 		for {
