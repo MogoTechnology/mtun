@@ -12,7 +12,7 @@ require (
 	github.com/oschwald/geoip2-golang v1.13.0
 	github.com/xjasonlyu/tun2socks/v2 v2.6.0
 	golang.zx2c4.com/wireguard v0.0.0-20250521234502-f333402bd9cb
-	gvisor.dev/gvisor v0.0.0-20250721175007-84b38c4b651f
+	gvisor.dev/gvisor v0.0.0-20250523182742-eede7a881b20
 )
 
 require (
