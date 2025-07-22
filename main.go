@@ -49,10 +49,6 @@ func (p PacketFlow) ReadPacket() []byte {
 	return buf[4 : size[0]+4]
 }
 
-func (p PacketFlow) ReconnectCallback(err error) {
-	fmt.Printf("reconnect call back: %+v", err)
-}
-
 func (p PacketFlow) WritePacket(packet []byte) {
 	packet = append([]byte{0, 0, 0, 0}, packet...)
 
@@ -92,8 +88,6 @@ func main() {
 		//Obfs:               "mogo2022",
 		IsDebug:            false,
 		LimitMemory:        1000,
-		MaxReconnectSecond: 15,
-		MaxReconnectCount:  1,
 		Bandwidth:          "80mbps",
 	})
 	if err != nil {
