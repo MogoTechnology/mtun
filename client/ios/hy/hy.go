@@ -3,12 +3,13 @@ package hy
 import (
 	"errors"
 	"fmt"
-	"github.com/apernet/hysteria/core/v2/client"
-	"gvisor.dev/gvisor/pkg/tcpip/stack"
 	"runtime"
 	"runtime/debug"
 	"strconv"
 	"time"
+
+	"github.com/apernet/hysteria/core/v2/client"
+	"gvisor.dev/gvisor/pkg/tcpip/stack"
 )
 
 type MogoHysteria struct {
@@ -22,14 +23,14 @@ type MogoHysteria struct {
 var defaultMogoHysteria *MogoHysteria
 
 type HyConfig struct {
-	Server             string
-	Port               int
-	Uuid               string
-	Obfs               string
-	IsDebug            bool
-	LimitMemory        int
-	Bandwidth          string
-	Token              string
+	Server      string
+	Port        int
+	Uuid        string
+	Obfs        string
+	IsDebug     bool
+	LimitMemory int
+	Bandwidth   string
+	Token       string
 }
 
 type PacketFlow interface {
@@ -106,10 +107,7 @@ func StartTunnel(flow PacketFlow, cfg *HyConfig) (*MogoHysteria, error) {
 	}
 
 	flow.Log("before create client")
-	hyClient, err := client.NewReconnectableClient(func() (*client.Config, error) {
-		// TODO(jinq): lazy to get config
-		return c, nil
-	}, func(c client.Client, info *client.HandshakeInfo, i int) {
+	hyClient, err := client.NewReconnectableClient(config.Config, func(c client.Client, info *client.HandshakeInfo, i int) {
 		flow.Log(fmt.Sprintf("connected, count: %d", i))
 	}, false)
 
@@ -140,10 +138,9 @@ func StartTunnel(flow PacketFlow, cfg *HyConfig) (*MogoHysteria, error) {
 }
 
 func Send(data []byte) error {
-	// TODO(jinq): check closed
-	// if defaultMogoHysteria.client.IsClose() {
-	// 	return errors.New("closed")
-	// }
+	if defaultMogoHysteria.client.IsClose() {
+		return errors.New("closed")
+	}
 	buf := make([]byte, len(data))
 	copy(buf, data)
 	//atomic.AddInt64(&waitSendCount, 1)

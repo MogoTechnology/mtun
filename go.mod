@@ -9,11 +9,11 @@ require (
 	github.com/net-byte/go-gateway v0.0.2
 	github.com/oschwald/geoip2-golang v1.11.0
 	github.com/stretchr/testify v1.9.0
-	github.com/xjasonlyu/tun2socks/v2 v2.5.2
+	github.com/xjasonlyu/tun2socks/v2 v2.6.0
 	golang.org/x/exp v0.0.0-20241009180824-f66d83c29e7c
 	golang.org/x/sys v0.33.0
-	golang.zx2c4.com/wireguard v0.0.0-20231211153847-12269c276173
-	gvisor.dev/gvisor v0.0.0-20230927004350-cbd86285d259
+	golang.zx2c4.com/wireguard v0.0.0-20250521234502-f333402bd9cb
+	gvisor.dev/gvisor v0.0.0-20250523182742-eede7a881b20
 )
 
 require (
@@ -34,7 +34,7 @@ require (
 	golang.org/x/sync v0.14.0 // indirect
 	golang.org/x/term v0.32.0 // indirect
 	golang.org/x/text v0.25.0 // indirect
-	golang.org/x/time v0.7.0 // indirect
+	golang.org/x/time v0.11.0 // indirect
 	golang.org/x/tools v0.33.0 // indirect
 	golang.zx2c4.com/wintun v0.0.0-20230126152724-0fa3db229ce2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
