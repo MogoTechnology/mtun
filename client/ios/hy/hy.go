@@ -3,12 +3,13 @@ package hy
 import (
 	"errors"
 	"fmt"
-	"github.com/apernet/hysteria/core/v2/client"
-	"gvisor.dev/gvisor/pkg/tcpip/stack"
 	"runtime"
 	"runtime/debug"
 	"strconv"
 	"time"
+
+	"github.com/apernet/hysteria/core/v2/client"
+	"gvisor.dev/gvisor/pkg/tcpip/stack"
 )
 
 type MogoHysteria struct {
@@ -22,14 +23,14 @@ type MogoHysteria struct {
 var defaultMogoHysteria *MogoHysteria
 
 type HyConfig struct {
-	Server             string
-	Port               int
-	Uuid               string
-	Obfs               string
-	IsDebug            bool
-	LimitMemory        int
-	Bandwidth          string
-	Token              string
+	Server      string
+	Port        int
+	Uuid        string
+	Obfs        string
+	IsDebug     bool
+	LimitMemory int
+	Bandwidth   string
+	Token       string
 }
 
 type PacketFlow interface {
@@ -78,12 +79,13 @@ func StartTunnel(flow PacketFlow, cfg *HyConfig) (*MogoHysteria, error) {
 	}
 
 	config := &clientConfig{
-		//Server: "143.198.80.160:443",
+		//Server: "47.95.31.127:7865",
 		//Server: "192.144.225.219:4433",
 		Server: cfg.Server + ":" + strconv.Itoa(cfg.Port),
 		Auth:   cfg.Uuid + "|" + cfg.Token,
 		TLS: clientConfigTLS{
 			Insecure: true,
+			//SNI:      "n1234.platovpn.com",
 		},
 		QUIC: clientConfigQUIC{
 			InitStreamReceiveWindow:     2097152,
@@ -103,29 +105,25 @@ func StartTunnel(flow PacketFlow, cfg *HyConfig) (*MogoHysteria, error) {
 		config.Obfs.Type = "salamander"
 		config.Obfs.Salamander.Password = cfg.Obfs
 	}
-	c, err := config.Config()
-	if err != nil {
-		println(err)
-		return defaultMogoHysteria, err
-	}
 
-	hyClient, err := client.NewReconnectableClient(func() (*client.Config, error) {
-		// TODO(jinq): lazy to get config
-		return c, nil
-	}, func(c client.Client, info *client.HandshakeInfo, i int) {
+	flow.Log("before create client")
+	hyClient, err := client.NewReconnectableClient(config.Config, func(c client.Client, info *client.HandshakeInfo, i int) {
 		flow.Log(fmt.Sprintf("connected, count: %d", i))
 	}, false)
 
 	if err != nil {
-		println(err)
+		flow.Log("create client error: " + err.Error())
 		return defaultMogoHysteria, err
 	}
+	flow.Log("after create client")
 
 	defaultMogoHysteria.client = hyClient
 
 	//defaultMogoHysteria.IP = hyClient.ClientIP()
 
+	flow.Log("before create stack")
 	err = defaultMogoHysteria.serve()
+	flow.Log("after create stack")
 
 	//err = defaultMogoHysteria.serverTun()
 

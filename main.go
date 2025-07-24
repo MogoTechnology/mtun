@@ -5,11 +5,7 @@ import (
 	"github.com/icechen128/mtun/client/ios/hy"
 	"github.com/xjasonlyu/tun2socks/v2/buffer"
 	"golang.zx2c4.com/wireguard/tun"
-	"log"
-	"log/slog"
-	"net/http"
 	_ "net/http/pprof"
-	"os"
 	"runtime"
 )
 
@@ -64,28 +60,28 @@ func (p PacketFlow) Log(msg string) {
 }
 
 func main() {
-	go func() {
-		log.Println(http.ListenAndServe("localhost:6060", nil))
-	}()
-	d, err := tun.CreateTUN("utun99", 1500)
-	if err != nil {
-		panic(err)
-	}
+	//go func() {
+	//	log.Println(http.ListenAndServe("localhost:6060", nil))
+	//}()
+	//d, err := tun.CreateTUN("utun99", 1500)
+	//if err != nil {
+	//	panic(err)
+	//}
 
 	//device := RWDevice{tunDevice: d}
 	//hy.DefaultTunnel = device
 
-	ifName, _ := d.Name()
+	//ifName, _ := d.Name()
 
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
-	tunnel, err := hy.StartTunnel(PacketFlow{d}, &hy.HyConfig{
-		Server: "45.76.158.147",
-		Port:   2021,
+	tunnel, err := hy.StartTunnel(PacketFlow{nil}, &hy.HyConfig{
+		Server: "47.95.31.127",
+		Port:   443,
 		//Server: "127.0.0.1",
 		//Port:   443,
-		Uuid: "ice",
-		//Obfs:               "mogo2022",
+		Uuid:               "ice",
+		Obfs:               "obfuscate mogo2022",
 		IsDebug:            false,
 		LimitMemory:        1000,
 		Bandwidth:          "80mbps",
@@ -96,30 +92,30 @@ func main() {
 	}
 	fmt.Println(tunnel)
 
-	SetRoute(tunnel.IP+"/16", ifName, "45.76.158.147:2121", "10.20.0.1", false)
+	//SetRoute(tunnel.IP+"/16", ifName, "45.76.158.147:2121", "10.20.0.1", false)
 
-	go func() {
-		buf := buffer.Get(buffer.RelayBufferSize)
-		defer buffer.Put(buf)
-		var buff = [][]byte{buf}
-		size := make([]int, 1)
-		for {
-			_, err = d.Read(buff, size, 4)
-
-			if err != nil {
-				fmt.Println("read tun error: " + err.Error())
-				return
-			}
-
-			err = hy.Send(buf[4 : size[0]+4])
-			if err != nil {
-				slog.Error("hy closed")
-				_ = tunnel.StopTunnel()
-				ResetRoute()
-				os.Exit(0)
-			}
-		}
-	}()
+	//go func() {
+	//	buf := pool.Get(pool.RelayBufferSize)
+	//	defer pool.Put(buf)
+	//	var buff = [][]byte{buf}
+	//	size := make([]int, 1)
+	//	for {
+	//		_, err = d.Read(buff, size, 4)
+	//
+	//		if err != nil {
+	//			fmt.Println("read tun error: " + err.Error())
+	//			return
+	//		}
+	//
+	//		err = hy.Send(buf[4 : size[0]+4])
+	//		if err != nil {
+	//			slog.Error("hy closed")
+	//			_ = tunnel.StopTunnel()
+	//			ResetRoute()
+	//			os.Exit(0)
+	//		}
+	//	}
+	//}()
 
 	select {}
 
