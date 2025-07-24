@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/icechen128/mtun/client/ios/hy"
-	"github.com/xjasonlyu/tun2socks/v2/common/pool"
+	"github.com/xjasonlyu/tun2socks/v2/buffer"
 	"golang.zx2c4.com/wireguard/tun"
 	_ "net/http/pprof"
 	"runtime"
@@ -37,16 +37,12 @@ type PacketFlow struct {
 }
 
 func (p PacketFlow) ReadPacket() []byte {
-	buf := pool.Get(pool.RelayBufferSize)
-	defer pool.Put(buf)
+	buf := buffer.Get(buffer.RelayBufferSize)
+	defer buffer.Put(buf)
 	var buff = [][]byte{buf}
 	size := make([]int, 1)
 	_, _ = p.device.Read(buff, size, 4)
 	return buf[4 : size[0]+4]
-}
-
-func (p PacketFlow) ReconnectCallback(err error) {
-	fmt.Printf("reconnect call back: %+v", err)
 }
 
 func (p PacketFlow) WritePacket(packet []byte) {
@@ -88,8 +84,6 @@ func main() {
 		Obfs:               "obfuscate mogo2022",
 		IsDebug:            false,
 		LimitMemory:        1000,
-		MaxReconnectSecond: 15,
-		MaxReconnectCount:  1,
 		Bandwidth:          "80mbps",
 	})
 	if err != nil {

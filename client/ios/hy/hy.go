@@ -28,8 +28,6 @@ type HyConfig struct {
 	Obfs               string
 	IsDebug            bool
 	LimitMemory        int
-	MaxReconnectSecond int
-	MaxReconnectCount  int
 	Bandwidth          string
 	Token              string
 }
@@ -38,7 +36,6 @@ type PacketFlow interface {
 	WritePacket(packet []byte)
 	ReadPacket() []byte
 	Log(msg string)
-	ReconnectCallback(err error)
 }
 
 func StartTunnel(flow PacketFlow, cfg *HyConfig) (*MogoHysteria, error) {
@@ -51,8 +48,6 @@ func StartTunnel(flow PacketFlow, cfg *HyConfig) (*MogoHysteria, error) {
 	//	//Obfs:               "mogo2022",
 	//	IsDebug:            false,
 	//	LimitMemory:        1000,
-	//	MaxReconnectSecond: 15,
-	//	MaxReconnectCount:  999999,
 	//	Bandwidth:          "",
 	//}
 	//if cfg.LimitMemory != 0 {
@@ -111,9 +106,12 @@ func StartTunnel(flow PacketFlow, cfg *HyConfig) (*MogoHysteria, error) {
 	}
 
 	flow.Log("before create client")
-	hyClient, err := client.NewReconnectableClient(config.Config, func(c client.Client, info *client.HandshakeInfo, count int) {
-		flow.Log(fmt.Sprintf("connected, count: %d", count))
-	}, false, cfg.MaxReconnectSecond, cfg.MaxReconnectCount)
+	hyClient, err := client.NewReconnectableClient(func() (*client.Config, error) {
+		// TODO(jinq): lazy to get config
+		return c, nil
+	}, func(c client.Client, info *client.HandshakeInfo, i int) {
+		flow.Log(fmt.Sprintf("connected, count: %d", i))
+	}, false)
 
 	if err != nil {
 		flow.Log("create client error: " + err.Error())
@@ -142,9 +140,10 @@ func StartTunnel(flow PacketFlow, cfg *HyConfig) (*MogoHysteria, error) {
 }
 
 func Send(data []byte) error {
-	if defaultMogoHysteria.client.IsClose() {
-		return errors.New("closed")
-	}
+	// TODO(jinq): check closed
+	// if defaultMogoHysteria.client.IsClose() {
+	// 	return errors.New("closed")
+	// }
 	buf := make([]byte, len(data))
 	copy(buf, data)
 	//atomic.AddInt64(&waitSendCount, 1)
