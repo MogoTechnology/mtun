@@ -29,7 +29,6 @@ require (
 	github.com/stretchr/objx v0.5.2 // indirect
 	go.uber.org/mock v0.5.0 // indirect
 	golang.org/x/crypto v0.38.0 // indirect
-	golang.org/x/mobile v0.0.0-20250520180527-a1d90793fc63 // indirect
 	golang.org/x/mod v0.24.0 // indirect
 	golang.org/x/net v0.40.0 // indirect
 	golang.org/x/sync v0.14.0 // indirect
@@ -42,4 +41,4 @@ require (
 	rsc.io/qr v0.2.0 // indirect
 )
 
-replace github.com/apernet/hysteria/core/v2 v2.5.2 => /Users/ice/work/mogo/new/hysteria/core
+replace github.com/apernet/hysteria/core/v2 v2.5.2 => ../hysteria/core
