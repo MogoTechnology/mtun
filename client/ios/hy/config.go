@@ -6,9 +6,10 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/apernet/hysteria/core/client"
-	"github.com/apernet/hysteria/extras/obfs"
-	"github.com/apernet/hysteria/extras/transport/udphop"
+	"github.com/apernet/hysteria/core/v2/client"
+	"github.com/apernet/hysteria/extras/v2/obfs"
+	"github.com/apernet/hysteria/extras/v2/transport/udphop"
+	"github.com/icechen128/mtun/client/ios/hy/sockopts"
 	"github.com/icechen128/mtun/client/ios/hy/utils"
 	"net"
 	"net/url"
@@ -75,13 +76,20 @@ type clientConfigTLS struct {
 }
 
 type clientConfigQUIC struct {
-	InitStreamReceiveWindow     uint64        `mapstructure:"initStreamReceiveWindow"`
-	MaxStreamReceiveWindow      uint64        `mapstructure:"maxStreamReceiveWindow"`
-	InitConnectionReceiveWindow uint64        `mapstructure:"initConnReceiveWindow"`
-	MaxConnectionReceiveWindow  uint64        `mapstructure:"maxConnReceiveWindow"`
-	MaxIdleTimeout              time.Duration `mapstructure:"maxIdleTimeout"`
-	KeepAlivePeriod             time.Duration `mapstructure:"keepAlivePeriod"`
-	DisablePathMTUDiscovery     bool          `mapstructure:"disablePathMTUDiscovery"`
+	InitStreamReceiveWindow     uint64                   `mapstructure:"initStreamReceiveWindow"`
+	MaxStreamReceiveWindow      uint64                   `mapstructure:"maxStreamReceiveWindow"`
+	InitConnectionReceiveWindow uint64                   `mapstructure:"initConnReceiveWindow"`
+	MaxConnectionReceiveWindow  uint64                   `mapstructure:"maxConnReceiveWindow"`
+	MaxIdleTimeout              time.Duration            `mapstructure:"maxIdleTimeout"`
+	KeepAlivePeriod             time.Duration            `mapstructure:"keepAlivePeriod"`
+	DisablePathMTUDiscovery     bool                     `mapstructure:"disablePathMTUDiscovery"`
+	Sockopts                    clientConfigQUICSockopts `mapstructure:"sockopts"`
+}
+
+type clientConfigQUICSockopts struct {
+	BindInterface       *string `mapstructure:"bindInterface"`
+	FirewallMark        *uint32 `mapstructure:"fwmark"`
+	FdControlUnixSocket *string `mapstructure:"fdControlUnixSocket"`
 }
 
 type clientConfigBandwidth struct {
@@ -150,6 +158,21 @@ func (c *clientConfig) fillServerAddr(hyConfig *client.Config) error {
 // fillConnFactory must be called after fillServerAddr, as we have different logic
 // for ConnFactory depending on whether we have a port hopping address.
 func (c *clientConfig) fillConnFactory(hyConfig *client.Config) error {
+	so := &sockopts.SocketOptions{
+		BindInterface:       c.QUIC.Sockopts.BindInterface,
+		FirewallMark:        c.QUIC.Sockopts.FirewallMark,
+		FdControlUnixSocket: c.QUIC.Sockopts.FdControlUnixSocket,
+	}
+	if err := so.CheckSupported(); err != nil {
+		var unsupportedErr *sockopts.UnsupportedError
+		if errors.As(err, &unsupportedErr) {
+			return configError{
+				Field: "quic.sockopts." + unsupportedErr.Field,
+				Err:   errors.New("unsupported on this platform"),
+			}
+		}
+		return configError{Field: "quic.sockopts", Err: err}
+	}
 	// Inner PacketConn
 	var newFunc func(addr net.Addr) (net.PacketConn, error)
 	switch strings.ToLower(c.Transport.Type) {
@@ -157,7 +180,7 @@ func (c *clientConfig) fillConnFactory(hyConfig *client.Config) error {
 		if hyConfig.ServerAddr.Network() == "udphop" {
 			hopAddr := hyConfig.ServerAddr.(*udphop.UDPHopAddr)
 			newFunc = func(addr net.Addr) (net.PacketConn, error) {
-				return udphop.NewUDPHopPacketConn(hopAddr, c.Transport.UDP.HopInterval)
+				return udphop.NewUDPHopPacketConn(hopAddr, c.Transport.UDP.HopInterval, so.ListenUDP)
 			}
 		} else {
 			newFunc = func(addr net.Addr) (net.PacketConn, error) {
