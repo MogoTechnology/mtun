@@ -31,12 +31,12 @@ const (
 	defaultMTU = 1500
 )
 
-type Device struct {
+type device struct {
 	*iobased.Endpoint
 }
 
-func WarpTun() (*Device, error) {
-	d := &Device{}
+func warpTun() (*device, error) {
+	d := &device{}
 	ep, err := iobased.New(d, defaultMTU, offset)
 	if err != nil {
 		return nil, err
@@ -45,11 +45,11 @@ func WarpTun() (*Device, error) {
 	return d, nil
 }
 
-func (d *Device) Write(b []byte) (int, error) {
+func (d *device) Write(b []byte) (int, error) {
 	return DefaultTunnel.Write(b)
 }
 
-func (d *Device) Read(b []byte) (int, error) {
+func (d *device) Read(b []byte) (int, error) {
 	n, err := DefaultTunnel.Read(b)
 	return n, err
 }

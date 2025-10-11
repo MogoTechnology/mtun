@@ -11,7 +11,7 @@ var DefaultDevice stack.LinkEndpoint
 
 func (mhy *MogoHysteria) serve() error {
 	if DefaultDevice == nil {
-		device, err := WarpTun()
+		device, err := warpTun()
 		if err != nil {
 			return err
 		}
