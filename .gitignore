@@ -23,3 +23,5 @@ go.work
 /mtun
 /.idea
 /ping-sources.jar
+/*.aar
+/*.jar
