@@ -1,5 +1,5 @@
 # 如何添加 jigsaw：
-# 1. 在同一目录下 clone mtun 和 outline-apps-v1-17-0 项目，
+# 1. 在同一目录下 clone mtun，hysteria 和 outline-apps-v1-17-0 项目，
 # 2. 运行 `go work init ./mtun ./outline-apps-v1-17-0` 生成 go.work 文件，
 # 3. 进入 mtun 目录，make ios/android 打包，将包含 jigsaw 协议。
 
