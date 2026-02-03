@@ -45,14 +45,17 @@ func (mhy *MogoHysteria) serve() error {
 	return err
 }
 
+// HandleTCP 是 TransportHandler 要求的方法
 func (mhy *MogoHysteria) HandleTCP(conn adapter.TCPConn) {
 	go mhy.handleTCP(conn)
 }
 
+// HandleUDP 是 TransportHandler 要求的方法
 func (mhy *MogoHysteria) HandleUDP(conn adapter.UDPConn) {
 	go mhy.handleUDP(conn)
 }
 
+// 没用到，可删
 func (mhy *MogoHysteria) serverTun() error {
 	//go func() {
 	//	for {

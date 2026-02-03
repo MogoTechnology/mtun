@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/apernet/hysteria/core/v2/client"
+	"github.com/xjasonlyu/tun2socks/v2/core/adapter"
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
 )
 
@@ -21,6 +22,7 @@ type MogoHysteria struct {
 }
 
 var defaultMogoHysteria *MogoHysteria
+var _ adapter.TransportHandler = (*MogoHysteria)(nil)
 
 type HyConfig struct {
 	Server      string

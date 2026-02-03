@@ -14,6 +14,7 @@ var waitSend = make(chan []byte, 1024)
 // waitReceive 应该没用。waitReceive 没人写入。
 var waitReceive = make(chan []byte, 1024)
 
+// DefaultTunnel 从 waitSend 读取数据，写入到 defaultMogoHysteria.flow
 var DefaultTunnel = tunnel{}
 
 func (t tunnel) Read(p []byte) (n int, err error) {
@@ -42,6 +43,8 @@ type device struct {
 
 var _ stack.LinkEndpoint = (*device)(nil)
 
+// warpTun 创建一个 device, 其中内嵌 stack.LinkEndpoint(.*Endpoint)
+// device 是空的，实际读写在 DefaultTunnel。
 func warpTun() (*device, error) {
 	d := &device{}
 	ep, err := iobased.New(d, defaultMTU, offset)
