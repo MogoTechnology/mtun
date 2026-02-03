@@ -2,11 +2,16 @@ package hy
 
 import (
 	"github.com/xjasonlyu/tun2socks/v2/core/device/iobased"
+	"gvisor.dev/gvisor/pkg/tcpip/stack"
 )
 
 type tunnel struct{}
 
+// waitSend 由 Send() 写入，(tunnel).Read() 读取，也即 (*device).Read()
+// 其数据是IP包吗？
 var waitSend = make(chan []byte, 1024)
+
+// waitReceive 应该没用。waitReceive 没人写入。
 var waitReceive = make(chan []byte, 1024)
 
 var DefaultTunnel = tunnel{}
@@ -34,6 +39,8 @@ const (
 type device struct {
 	*iobased.Endpoint
 }
+
+var _ stack.LinkEndpoint = (*device)(nil)
 
 func warpTun() (*device, error) {
 	d := &device{}

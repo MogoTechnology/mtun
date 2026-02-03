@@ -137,6 +137,7 @@ func StartTunnel(flow PacketFlow, cfg *HyConfig) (*MogoHysteria, error) {
 	return defaultMogoHysteria, err
 }
 
+// Send 是向 Hysteria 服务器发送数据？只有 TCP 数据？如何区分连接？
 func Send(data []byte) error {
 	// TODO(jinq): check closed
 	// if defaultMogoHysteria.client.IsClose() {
@@ -161,6 +162,7 @@ func Send(data []byte) error {
 //	return err
 //}
 
+// 应该没用。waitReceive 没人写入。
 func Receive() ([]byte, error) {
 	//timeoutTicker := time.NewTicker(time.Second * 10)
 	//defer timeoutTicker.Stop()
