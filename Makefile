@@ -5,6 +5,12 @@
 
 OUTLINE_DIR=../outline-apps-v1-17-0/client/go/outline
 
+# 导出环境变量到所有规则  环境变量用于解决下面这个url的issue
+# https://github.com/golang/go/issues/71827#issuecomment-2669425491
+export GODEBUG=gotypesalias=0
+export CGO_CFLAGS=-fstack-protector-strong
+export MACOSX_DEPLOYMENT_TARGET=12.0
+
 ios:
 	gomobile bind -v -target ios ./client/ios/hy ./ping ${OUTLINE_DIR}/platerrors ${OUTLINE_DIR}/tun2socks ${OUTLINE_DIR}
 #	 gomobile bind -target=ios -o goPing.xcframework ./ping    打包出goPing
