@@ -41,6 +41,9 @@ type PacketFlow interface {
 	Log(msg string)
 }
 
+// StartTunnel 启动hysteria隧道。
+//
+// Android 系统可使用 StartTunnelWithAndroidTunFd(), 更简单。
 func StartTunnel(flow PacketFlow, cfg *HyConfig) (*MogoHysteria, error) {
 	//cfg = &HyConfig{
 	//	//Server: "127.0.0.1",
