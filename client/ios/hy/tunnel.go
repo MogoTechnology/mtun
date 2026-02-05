@@ -2,13 +2,19 @@ package hy
 
 import (
 	"github.com/xjasonlyu/tun2socks/v2/core/device/iobased"
+	"gvisor.dev/gvisor/pkg/tcpip/stack"
 )
 
 type tunnel struct{}
 
+// waitSend 由 Send() 写入，(tunnel).Read() 读取，也即 (*device).Read()
+// 其数据是IP包吗？
 var waitSend = make(chan []byte, 1024)
+
+// waitReceive 应该没用。waitReceive 没人写入。
 var waitReceive = make(chan []byte, 1024)
 
+// DefaultTunnel 从 waitSend 读取数据，写入到 defaultMogoHysteria.flow
 var DefaultTunnel = tunnel{}
 
 func (t tunnel) Read(p []byte) (n int, err error) {
@@ -35,6 +41,10 @@ type device struct {
 	*iobased.Endpoint
 }
 
+var _ stack.LinkEndpoint = (*device)(nil)
+
+// warpTun 创建一个 device, 其中内嵌 stack.LinkEndpoint(.*Endpoint)
+// device 是空的，实际读写在 DefaultTunnel。
 func warpTun() (*device, error) {
 	d := &device{}
 	ep, err := iobased.New(d, defaultMTU, offset)
