@@ -2,8 +2,10 @@ package hy
 
 import (
 	"errors"
+	"fmt"
 	"os"
 
+	"github.com/xjasonlyu/tun2socks/v2/buffer"
 	"golang.org/x/sys/unix"
 )
 
@@ -16,7 +18,7 @@ func StartTunnelWithAndroidTunFd(fd int, cfg *HyConfig) (*MogoHysteria, error) {
 		return defaultMogoHysteria, errors.New("failed to create the TUN device")
 	}
 
-	androidPacketFlow := &addroidPacketFlow{
+	androidPacketFlow := &androidPacketFlow{
 		tunFile: tunFile,
 	}
 	return StartTunnel(androidPacketFlow, cfg)
@@ -25,19 +27,38 @@ func StartTunnelWithAndroidTunFd(fd int, cfg *HyConfig) (*MogoHysteria, error) {
 type androidPacketFlow struct {
 	tunFile *os.File
 }
+
 // 确保 addroidPacketFlow 实现了 PacketFlow 接口（编译期检查）
 var _ PacketFlow = (*androidPacketFlow)(nil)
 
-(a *androidPacketFlow) WritePacket(packet []byte) {
-	// TODO
+func (a *androidPacketFlow) WritePacket(packet []byte) {
+	_, err := a.tunFile.Write(packet)
+	if err != nil {
+		a.Log(fmt.Sprintf("tun write error: %v", err))
+		a.Close()
+	}
 }
 
-(a *androidPacketFlow) ReadPacket() []byte {
-	// TODO
+func (a *androidPacketFlow) ReadPacket() []byte {
+	buf := make([]byte, buffer.RelayBufferSize)
+	n, err := a.tunFile.Read(buf)
+	if err != nil {
+		a.Log(fmt.Sprintf("tun read error: %v", err))
+		a.Close()
+		return []byte{}
+	}
+	return buf[:n]
 }
 
-(a *androidPacketFlow) Log(msg string) {
-	// TODO
+func (a *androidPacketFlow) Log(msg string) {
+	fmt.Println(msg)
+}
+
+func (a *androidPacketFlow) Close() {
+	err := a.tunFile.Close()
+	if err != nil {
+		a.Log(fmt.Sprintf("tun close error: %v", err))
+	}
 }
 
 // makeTunFile returns an os.File object from a TUN file descriptor `fd`.
