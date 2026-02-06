@@ -55,10 +55,7 @@ func (a *androidPacketFlow) Log(msg string) {
 }
 
 func (a *androidPacketFlow) Close() {
-	err := a.tunFile.Close()
-	if err != nil {
-		a.Log(fmt.Sprintf("tun close error: %v", err))
-	}
+	a.tunFile.Close()
 }
 
 // makeTunFile returns an os.File object from a TUN file descriptor `fd`.
