@@ -35,7 +35,7 @@ func (a *androidPacketFlow) WritePacket(packet []byte) {
 	_, err := a.tunFile.Write(packet)
 	if err != nil {
 		a.Log(fmt.Sprintf("tun write error: %v", err))
-		a.Close()
+		a.close()
 	}
 }
 
@@ -44,7 +44,7 @@ func (a *androidPacketFlow) ReadPacket() []byte {
 	n, err := a.tunFile.Read(buf)
 	if err != nil {
 		a.Log(fmt.Sprintf("tun read error: %v", err))
-		a.Close()
+		a.close()
 		return []byte{}
 	}
 	return buf[:n]
@@ -54,7 +54,7 @@ func (a *androidPacketFlow) Log(msg string) {
 	fmt.Println(msg)
 }
 
-func (a *androidPacketFlow) Close() {
+func (a *androidPacketFlow) close() {
 	a.tunFile.Close()
 }
 

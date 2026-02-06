@@ -202,7 +202,7 @@ func (mhy *MogoHysteria) StopTunnel() error {
 	mhy.client.Close()
 
 	if androidFlow, ok := mhy.flow.(*androidPacketFlow); ok {
-		androidFlow.Close()
+		androidFlow.close()
 	}
 
 	return nil
