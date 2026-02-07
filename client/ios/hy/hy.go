@@ -63,16 +63,16 @@ func StartTunnel(flow PacketFlow, cfg *HyConfig) (*MogoHysteria, error) {
 	//}
 	flow.Log("start tunnel...")
 	if len(cfg.Server) == 0 {
-		return defaultMogoHysteria, errors.New("server error")
+		return defaultMogoHysteria, errors.New("configured server is empty")
 	}
 	if cfg.Port == 0 {
-		return defaultMogoHysteria, errors.New("port error")
+		return defaultMogoHysteria, errors.New("configured port is 0")
 	}
 	if len(cfg.Uuid) == 0 {
-		return defaultMogoHysteria, errors.New("uuid error")
+		return defaultMogoHysteria, errors.New("configured uuid is empty")
 	}
 	if len(cfg.Obfs) != 0 && len(cfg.Obfs) < 4 {
-		return defaultMogoHysteria, errors.New("obfs error")
+		return defaultMogoHysteria, errors.New("configured obfs is too short")
 	}
 
 	//if cfg.Bandwidth == "" {
@@ -117,7 +117,8 @@ func StartTunnel(flow PacketFlow, cfg *HyConfig) (*MogoHysteria, error) {
 	}, false)
 
 	if err != nil {
-		flow.Log("create client error: " + err.Error())
+		err = fmt.Errorf("create client error: %w", err)
+		flow.Log(err.Error())
 		return defaultMogoHysteria, err
 	}
 	flow.Log("after create client")
