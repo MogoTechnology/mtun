@@ -21,6 +21,7 @@ func StartTunnelWithAndroidTunFd(fd int, cfg *HyConfig) (*MogoHysteria, error) {
 	androidPacketFlow := &androidPacketFlow{
 		tunFile: tunFile,
 	}
+	// TODO: ReadPacket() 已废弃，须开启协程读取 tun 并调用 Send()
 	return StartTunnel(androidPacketFlow, cfg)
 }
 

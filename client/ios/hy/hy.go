@@ -36,7 +36,11 @@ type HyConfig struct {
 }
 
 type PacketFlow interface {
+	// WritePacket 向 tun 设备写入 IP 包。
 	WritePacket(packet []byte)
+	// ReadPacket 从 tun 设备读取 IP 包。
+	// ios 应该已废弃使用。ios 须主动调用 Send() 将 IP 包发送到 hy 服务器。 
+	// TOOD：Android 须额外实现从 tun 读取 IP 包并调用 Send()
 	ReadPacket() []byte
 	Log(msg string)
 }
