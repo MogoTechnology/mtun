@@ -143,7 +143,8 @@ func StartTunnel(flow PacketFlow, cfg *HyConfig) (*MogoHysteria, error) {
 	return defaultMogoHysteria, err
 }
 
-// Send 是向 Hysteria 服务器发送数据？只有 TCP 数据？如何区分连接？
+// Send 是 tun 设备向 Hysteria 服务器发送 IP 包数据。
+// 仅用于 ios 平台，Android 平台使用 StartTunnelWithAndroidTunFd(), 直接从 tun fd 读取 IP 包数据。
 func Send(data []byte) error {
 	// TODO(jinq): check closed
 	// if defaultMogoHysteria.client.IsClose() {
@@ -152,7 +153,7 @@ func Send(data []byte) error {
 	buf := make([]byte, len(data))
 	copy(buf, data)
 	//atomic.AddInt64(&waitSendCount, 1)
-	waitSend <- buf
+	waitSend <- buf  // tunnel.Read() 将从 waitSend 读取数据
 	return nil
 }
 

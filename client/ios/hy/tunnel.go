@@ -8,7 +8,7 @@ import (
 type tunnel struct{}
 
 // waitSend 由 Send() 写入，(tunnel).Read() 读取，也即 (*device).Read()
-// 其数据是IP包吗？
+// 其数据是IP包。
 var waitSend = make(chan []byte, 1024)
 
 // waitReceive 应该没用。waitReceive 没人写入。
