@@ -39,8 +39,7 @@ type PacketFlow interface {
 	// WritePacket 向 tun 设备写入 IP 包。
 	WritePacket(packet []byte)
 	// ReadPacket 从 tun 设备读取 IP 包。
-	// ios 应该已废弃使用。ios 须主动调用 Send() 将 IP 包发送到 hy 服务器。 
-	// TOOD：Android 须额外实现从 tun 读取 IP 包并调用 Send()
+	// 应该已废弃使用。ios 须主动调用 Send() 将 IP 包发送到 hy 服务器。 Android 须额外实现从 tun 读取 IP 包并调用 Send()
 	ReadPacket() []byte
 	Log(msg string)
 }
@@ -148,7 +147,7 @@ func StartTunnel(flow PacketFlow, cfg *HyConfig) (*MogoHysteria, error) {
 }
 
 // Send 是 tun 设备向 Hysteria 服务器发送 IP 包数据。
-// 仅用于 ios 平台，Android 平台使用 StartTunnelWithAndroidTunFd(), 直接从 tun fd 读取 IP 包数据。
+// ios 平台须主动调用。Android 平台使用 StartTunnelWithAndroidTunFd() 自动调用, 直接从 tun fd 读取 IP 包数据。
 func Send(data []byte) error {
 	// TODO(jinq): check closed
 	// if defaultMogoHysteria.client.IsClose() {

@@ -21,7 +21,10 @@ func StartTunnelWithAndroidTunFd(fd int, cfg *HyConfig) (*MogoHysteria, error) {
 	androidPacketFlow := &androidPacketFlow{
 		tunFile: tunFile,
 	}
-	// TODO: ReadPacket() 已废弃，须开启协程读取 tun 并调用 Send()
+
+	// ReadPacket() 已废弃，须开启协程读取 tun 并调用 Send()
+	go readFromTunAndSend(tunFile)
+
 	return StartTunnel(androidPacketFlow, cfg)
 }
 
@@ -40,15 +43,9 @@ func (a *androidPacketFlow) WritePacket(packet []byte) {
 	}
 }
 
+// ReadPacket 已废弃，不应该被调用。
 func (a *androidPacketFlow) ReadPacket() []byte {
-	buf := make([]byte, buffer.RelayBufferSize)
-	n, err := a.tunFile.Read(buf)
-	if err != nil {
-		a.Log(fmt.Sprintf("tun read error: %v", err))
-		a.close()
-		return []byte{}
-	}
-	return buf[:n]
+	return nil
 }
 
 func (a *androidPacketFlow) Log(msg string) {
@@ -69,4 +66,28 @@ func makeTunFile(fd int) (*os.File, error) {
 		return nil, errors.New("failed to open TUN file descriptor")
 	}
 	return file, nil
+}
+
+// readFromTunAndSend 从 tun 文件读取 IP 包数据，并调用 Send() 发送。
+// 读取出错时会关闭 tun 文件。
+func readFromTunAndSend(tunFile *os.File) {
+	buf := buffer.Get(buffer.RelayBufferSize)
+	defer buffer.Put(buf)
+
+	for {
+		n, err := tunFile.Read(buf)
+
+		if err != nil {
+			fmt.Println("read tun error: " + err.Error())
+			_ = tunFile.Close()
+			return
+		}
+
+		err = Send(buf[:n])
+		if err != nil {
+			fmt.Println("hy closed")
+			_ = tunFile.Close()
+			return
+		}
+	}
 }
