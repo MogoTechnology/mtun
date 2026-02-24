@@ -11,7 +11,7 @@ import (
 // StartTunnelWithAndroidTunFd 启动hysteria隧道，使用Android Tun FD。
 //
 // 仅用于 Android 系统，其他系统请使用 StartTunnel()。
-// 传入的 fd 会在 StopTunnel() 时关闭，读写出错时也会关闭。
+// 传入的 fd 会在 StopTunnel() 时关闭。
 func StartTunnelWithAndroidTunFd(fd int, cfg *HyConfig) (*MogoHysteria, error) {
 	tunFile, err := makeTunFile(fd)
 	if err != nil {
@@ -39,7 +39,6 @@ func (a *androidPacketFlow) WritePacket(packet []byte) {
 	_, err := a.tunFile.Write(packet)
 	if err != nil {
 		a.Log(fmt.Sprintf("tun write error: %v", err))
-		a.close()
 	}
 }
 
@@ -69,7 +68,7 @@ func makeTunFile(fd int) (*os.File, error) {
 }
 
 // readFromTunAndSend 从 tun 文件读取 IP 包数据，并调用 Send() 发送。
-// 读取出错时会关闭 tun 文件。
+// 读取出错时会退出。
 func readFromTunAndSend(tunFile *os.File) {
 	buf := buffer.Get(buffer.RelayBufferSize)
 	defer buffer.Put(buf)
@@ -79,14 +78,12 @@ func readFromTunAndSend(tunFile *os.File) {
 
 		if err != nil {
 			fmt.Println("read tun error: " + err.Error())
-			_ = tunFile.Close()
 			return
 		}
 
 		err = Send(buf[:n])
 		if err != nil {
 			fmt.Println("hy closed")
-			_ = tunFile.Close()
 			return
 		}
 	}
