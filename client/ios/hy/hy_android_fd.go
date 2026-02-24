@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"sync/atomic"
 
 	"github.com/xjasonlyu/tun2socks/v2/buffer"
 )
@@ -23,19 +24,24 @@ func StartTunnelWithAndroidTunFd(fd int, cfg *HyConfig) (*MogoHysteria, error) {
 	}
 
 	// ReadPacket() 已废弃，须开启协程读取 tun 并调用 Send()
-	go readFromTunAndSend(tunFile)
+	go readFromTunAndSend(tunFile, &androidPacketFlow.closed)
 
 	return StartTunnel(androidPacketFlow, cfg)
 }
 
 type androidPacketFlow struct {
 	tunFile *os.File
+	closed  atomic.Bool
 }
 
 // 确保 addroidPacketFlow 实现了 PacketFlow 接口（编译期检查）
 var _ PacketFlow = (*androidPacketFlow)(nil)
 
 func (a *androidPacketFlow) WritePacket(packet []byte) {
+	if a.isClosed() {
+		return
+	}
+
 	_, err := a.tunFile.Write(packet)
 	if err != nil {
 		a.Log(fmt.Sprintf("tun write error: %v", err))
@@ -49,6 +55,14 @@ func (a *androidPacketFlow) ReadPacket() []byte {
 
 func (a *androidPacketFlow) Log(msg string) {
 	fmt.Println(msg)
+}
+
+func (a *androidPacketFlow) close() {
+	a.closed.Store(true)
+}
+
+func (a *androidPacketFlow) isClosed() bool {
+	return a.closed.Load()
 }
 
 // makeTunFile returns an os.File object from a TUN file descriptor `fd`.
@@ -65,18 +79,23 @@ func makeTunFile(fd int) (*os.File, error) {
 
 // readFromTunAndSend 从 tun 文件读取 IP 包数据，并调用 Send() 发送。
 // 读取出错时会退出。
-func readFromTunAndSend(tunFile *os.File) {
+func readFromTunAndSend(tunFile *os.File, closed *atomic.Bool) {
 	buf := buffer.Get(buffer.RelayBufferSize)
 	defer buffer.Put(buf)
 
 	for {
+		if closed.Load() {
+			return
+		}
 		n, err := tunFile.Read(buf)
-
 		if err != nil {
 			fmt.Println("read tun error: " + err.Error())
 			return
 		}
 
+		if closed.Load() {
+			return
+		}
 		err = Send(buf[:n])
 		if err != nil {
 			fmt.Println("hy closed")
