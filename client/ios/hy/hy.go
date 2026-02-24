@@ -148,7 +148,6 @@ func StartTunnel(flow PacketFlow, cfg *HyConfig) (*MogoHysteria, error) {
 
 // Send 是 tun 设备向 Hysteria 服务器发送 IP 包数据。
 // ios 平台须主动调用。Android 平台使用 StartTunnelWithAndroidTunFd() 自动调用, 直接从 tun fd 读取 IP 包数据。
-// 已知Bug: 前一个 tunnel 结束后，仍会有 Send() 调用，因为 waitSend 是全局的，会影响到新的 tunnel.
 func Send(data []byte) error {
 	// TODO(jinq): check closed
 	// if defaultMogoHysteria.client.IsClose() {
@@ -159,6 +158,18 @@ func Send(data []byte) error {
 	//atomic.AddInt64(&waitSendCount, 1)
 	waitSend <- buf  // tunnel.Read() 将从 waitSend 读取数据
 	return nil
+}
+
+// flushWaiting 清空 waitSend 中残留的数据，避免影响下个 tunnel.
+// 因为 waitSend 是全局的，StopTunnel() 后残留数据会影响到新的 tunnel.
+func flushWaiting() {
+	for {
+		select {
+		case <-waitSend:
+		default:
+			return
+		}
+	}
 }
 
 //func BatchSend(data [][]byte) error {
@@ -210,6 +221,7 @@ func (mhy *MogoHysteria) StopTunnel() error {
 	if androidFlow, ok := mhy.flow.(*androidPacketFlow); ok {
 		androidFlow.close()
 	}
+	flushWaiting()
 
 	return nil
 }
