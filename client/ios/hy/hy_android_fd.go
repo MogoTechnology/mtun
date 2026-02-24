@@ -52,6 +52,7 @@ func (a *androidPacketFlow) Log(msg string) {
 }
 
 func (a *androidPacketFlow) close() {
+	a.Log("close tun file")
 	a.tunFile.Close()
 }
 
