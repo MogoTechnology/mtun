@@ -11,7 +11,7 @@ import (
 // StartTunnelWithAndroidTunFd 启动hysteria隧道，使用Android Tun FD。
 //
 // 仅用于 Android 系统，其他系统请使用 StartTunnel()。
-// 传入的 fd 会在 StopTunnel() 时关闭。
+// 传入的 fd 由调用者管理，即由调用者负责关闭。
 func StartTunnelWithAndroidTunFd(fd int, cfg *HyConfig) (*MogoHysteria, error) {
 	tunFile, err := makeTunFile(fd)
 	if err != nil {
@@ -49,12 +49,6 @@ func (a *androidPacketFlow) ReadPacket() []byte {
 
 func (a *androidPacketFlow) Log(msg string) {
 	fmt.Println(msg)
-}
-
-func (a *androidPacketFlow) close() {
-	a.Log("close tun file")
-	a.tunFile.Close()
-	a.tunFile = nil // 防止再次调用 Close()
 }
 
 // makeTunFile returns an os.File object from a TUN file descriptor `fd`.
