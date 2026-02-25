@@ -4,13 +4,14 @@ import (
 	"github.com/xjasonlyu/tun2socks/v2/core"
 	"github.com/xjasonlyu/tun2socks/v2/core/adapter"
 	"github.com/xjasonlyu/tun2socks/v2/core/option"
-	"gvisor.dev/gvisor/pkg/tcpip/stack"
 )
 
-var DefaultDevice stack.LinkEndpoint
+// DefaultDevice 没用到，总是为 nil
+// var DefaultDevice stack.LinkEndpoint
 
 func (mhy *MogoHysteria) serve() error {
-	if DefaultDevice == nil {
+	// DefaultDevice 没用到，总是为 nil
+	if true { // DefaultDevice == nil {
 		device, err := warpTun()
 		if err != nil {
 			return err
@@ -18,7 +19,8 @@ func (mhy *MogoHysteria) serve() error {
 
 		mhy.device = device
 	} else {
-		mhy.device = DefaultDevice
+		// DefaultDevice 没用到，总是为 nil
+		// mhy.device = DefaultDevice
 	}
 	//
 	var err error
