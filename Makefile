@@ -7,12 +7,12 @@
 # 3. 进入 mtun 目录，make android 打包，将包含 jigsaw 协议。
 #
 # ios:
-# 1. 在同一目录下 clone mtun，hysteria 和 outline-apps-client-macos-v1-19-5 项目
-# 2. 运行 `go work init ./mtun ./outline-apps-client-macos-v1-19-5` 生成 go.work 文件，
+# 1. 在同一目录下 clone mtun，hysteria 和 outline-apps-client-ios-v1-19-0-rc-1 项目
+# 2. 运行 `go work init ./mtun ./outline-apps-client-ios-v1-19-0-rc-1` 生成 go.work 文件，
 # 3. 进入 mtun 目录，make ios 打包，将包含 jigsaw 协议。
 
 OUTLINE_DIR_ANDROID=../outline-apps-v1-17-0/client/go/outline
-OUTLINE_DIR_IOS=../outline-apps-client-macos-v1-19-5/client/go/outline
+OUTLINE_DIR_IOS=../outline-apps-client-ios-v1-19-0-rc-1/client/go/outline
 
 # 导出环境变量到所有规则  环境变量用于解决下面这个url的issue
 # https://github.com/golang/go/issues/71827#issuecomment-2669425491
