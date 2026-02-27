@@ -23,10 +23,15 @@ func StartTunnelWithAndroidTunFd(fd int, cfg *HyConfig) (*MogoHysteria, error) {
 		tunFile: tunFile,
 	}
 
-	// ReadPacket() 已废弃，须开启协程读取 tun 并调用 Send()
-	go readFromTunAndSend(tunFile, &androidPacketFlow.closed)
+	mogoHysteria, err := StartTunnel(androidPacketFlow, cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to start tunnel: %w", err)
+	}
 
-	return StartTunnel(androidPacketFlow, cfg)
+	// ReadPacket() 已废弃，须开启协程读取 tun 并调用 Send()
+	go mogoHysteria.readFromTunAndSend(tunFile, &androidPacketFlow.closed)
+
+	return mogoHysteria, nil
 }
 
 type androidPacketFlow struct {
@@ -79,7 +84,8 @@ func makeTunFile(fd int) (*os.File, error) {
 
 // readFromTunAndSend 从 tun 文件读取 IP 包数据，并调用 Send() 发送。
 // 读取出错时会退出。
-func readFromTunAndSend(tunFile *os.File, closed *atomic.Bool) {
+// 仅用于 Android 系统，其他系统请使用 StartTunnel()。
+func (mhy *MogoHysteria) readFromTunAndSend(tunFile *os.File, closed *atomic.Bool) {
 	buf := buffer.Get(buffer.RelayBufferSize)
 	defer buffer.Put(buf)
 
@@ -96,10 +102,19 @@ func readFromTunAndSend(tunFile *os.File, closed *atomic.Bool) {
 		if closed.Load() {
 			return
 		}
-		err = Send(buf[:n])
-		if err != nil {
-			fmt.Println("hy closed")
-			return
-		}
+		mhy.send(buf[:n])
 	}
+}
+
+// send 是 tun 设备向 Hysteria 服务器发送 IP 包数据。
+// ios 平台须主动通过 Send()调用。Android 平台使用 StartTunnelWithAndroidTunFd() 自动调用, 直接从 tun fd 读取 IP 包数据。
+func (mhy *MogoHysteria) send(data []byte) {
+	// TODO(jinq): check closed
+	// if defaultMogoHysteria.client.IsClose() {
+	// 	return errors.New("closed")
+	// }
+	buf := make([]byte, len(data))
+	copy(buf, data)
+	//atomic.AddInt64(&waitSendCount, 1)
+	waitSend <- buf // tunnel.Read() 将从 waitSend 读取数据
 }
