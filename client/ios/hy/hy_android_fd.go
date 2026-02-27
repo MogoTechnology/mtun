@@ -16,7 +16,7 @@ import (
 func StartTunnelWithAndroidTunFd(fd int, cfg *HyConfig) (*MogoHysteria, error) {
 	tunFile, err := makeTunFile(fd)
 	if err != nil {
-		return defaultMogoHysteria, errors.New("failed to create the TUN device")
+		return nil, errors.New("failed to create the TUN device")
 	}
 
 	androidPacketFlow := &androidPacketFlow{

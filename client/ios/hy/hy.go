@@ -66,16 +66,16 @@ func StartTunnel(flow PacketFlow, cfg *HyConfig) (*MogoHysteria, error) {
 	//}
 	flow.Log("start tunnel...")
 	if len(cfg.Server) == 0 {
-		return defaultMogoHysteria, errors.New("configured server is empty")
+		return nil, errors.New("configured server is empty")
 	}
 	if cfg.Port == 0 {
-		return defaultMogoHysteria, errors.New("configured port is 0")
+		return nil, errors.New("configured port is 0")
 	}
 	if len(cfg.Uuid) == 0 {
-		return defaultMogoHysteria, errors.New("configured uuid is empty")
+		return nil, errors.New("configured uuid is empty")
 	}
 	if len(cfg.Obfs) != 0 && len(cfg.Obfs) < 4 {
-		return defaultMogoHysteria, errors.New("configured obfs is too short")
+		return nil, errors.New("configured obfs is too short")
 	}
 
 	//if cfg.Bandwidth == "" {
@@ -156,7 +156,7 @@ func Send(data []byte) error {
 	buf := make([]byte, len(data))
 	copy(buf, data)
 	//atomic.AddInt64(&waitSendCount, 1)
-	waitSend <- buf  // tunnel.Read() 将从 waitSend 读取数据
+	waitSend <- buf // tunnel.Read() 将从 waitSend 读取数据
 	return nil
 }
 
