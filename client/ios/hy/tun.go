@@ -9,7 +9,7 @@ import (
 // DefaultDevice 没用到，总是为 nil
 // var DefaultDevice stack.LinkEndpoint
 
-func (mhy *MogoHysteria) serve() error {
+func (mhy *MogoHysteria) createStack() error {
 	// DefaultDevice 没用到，总是为 nil
 	if true { // DefaultDevice == nil {
 		device, err := warpTun()

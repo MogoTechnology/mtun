@@ -122,7 +122,7 @@ func StartTunnel(flow PacketFlow, cfg *HyConfig) (*MogoHysteria, error) {
 	if err != nil {
 		err = fmt.Errorf("create client error: %w", err)
 		flow.Log(err.Error())
-		return defaultMogoHysteria, err
+		return nil, err
 	}
 	flow.Log("after create client")
 
@@ -131,7 +131,12 @@ func StartTunnel(flow PacketFlow, cfg *HyConfig) (*MogoHysteria, error) {
 	//defaultMogoHysteria.IP = hyClient.ClientIP()
 
 	flow.Log("before create stack")
-	err = defaultMogoHysteria.serve()
+	err = defaultMogoHysteria.createStack()
+	if err != nil {
+		err = fmt.Errorf("create stack error: %w", err)
+		flow.Log(err.Error())
+		return nil, err
+	}
 	flow.Log("after create stack")
 
 	//err = defaultMogoHysteria.serverTun()
@@ -143,7 +148,7 @@ func StartTunnel(flow PacketFlow, cfg *HyConfig) (*MogoHysteria, error) {
 	if defaultMogoHysteria.IP == "" {
 		defaultMogoHysteria.IP = "10.20.0.1"
 	}
-	return defaultMogoHysteria, err
+	return defaultMogoHysteria, nil
 }
 
 // Send 是 tun 设备向 Hysteria 服务器发送 IP 包数据。

@@ -1,6 +1,8 @@
 package hy
 
 import (
+	"fmt"
+
 	"github.com/xjasonlyu/tun2socks/v2/core/device/iobased"
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
 )
@@ -26,6 +28,7 @@ func (t tunnel) Read(p []byte) (n int, err error) {
 }
 
 func (t tunnel) Write(p []byte) (n int, err error) {
+	// TODO: add flow WritePacket() into tunnel
 	if defaultMogoHysteria.flow != nil {
 		defaultMogoHysteria.flow.WritePacket(p)
 	}
@@ -49,7 +52,7 @@ func warpTun() (*device, error) {
 	d := &device{}
 	ep, err := iobased.New(d, defaultMTU, offset)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to new EndPoint: %w", err)
 	}
 	d.Endpoint = ep
 	return d, nil
