@@ -189,22 +189,6 @@ func flushWaiting() {
 //	return err
 //}
 
-// 应该没用。waitReceive 没人写入。
-func Receive() ([]byte, error) {
-	//timeoutTicker := time.NewTicker(time.Second * 10)
-	//defer timeoutTicker.Stop()
-	//select {
-	//case data := <-waitReceive:
-	//	return data, nil
-	//case <-timeoutTicker.C:
-	//	return nil, errors.New("timeout")
-	//}
-
-	data := <-waitReceive
-	//atomic.AddInt64(&waitReceiveCount, -1)
-	return data, nil
-}
-
 func (mhy *MogoHysteria) StopTunnel() error {
 	//go defaultMogoHysteria.stack.Close()
 	if mhy == nil {

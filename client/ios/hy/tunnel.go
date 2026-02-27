@@ -13,9 +13,6 @@ type tunnel struct{}
 // 其数据是IP包。
 var waitSend = make(chan []byte, 1024)
 
-// waitReceive 应该没用。waitReceive 没人写入。
-var waitReceive = make(chan []byte, 1024)
-
 // DefaultTunnel 从 waitSend 读取数据，写入到 defaultMogoHysteria.flow
 var DefaultTunnel = tunnel{}
 
