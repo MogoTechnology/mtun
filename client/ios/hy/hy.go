@@ -17,7 +17,6 @@ type MogoHysteria struct {
 	client client.Client
 	stack  *stack.Stack
 	flow   PacketFlow
-	IP     string
 
 	// waitSend 是从 tun 到 server 发送 IP 包数据的通道。
 	// waitSend 由 Send() 写入，(tunReadWriter).Read() 读取
@@ -54,6 +53,10 @@ type PacketFlow interface {
 //
 // Android 系统可使用 StartTunnelWithAndroidTunFd(), 更简单。
 func StartTunnel(flow PacketFlow, cfg *HyConfig) (*MogoHysteria, error) {
+	if flow == nil {
+		return nil, errors.New("package flow is nil")
+	}
+
 	//cfg = &HyConfig{
 	//	//Server: "127.0.0.1",
 	//	Server: "47.101.36.120",
@@ -130,8 +133,8 @@ func StartTunnel(flow PacketFlow, cfg *HyConfig) (*MogoHysteria, error) {
 
 	waitSend := make(chan []byte, 1024)
 	mogoHysteria := &MogoHysteria{
-		flow: flow,
-		client: hyClient,
+		flow:     flow,
+		client:   hyClient,
 		waitSend: waitSend,
 	}
 
@@ -145,10 +148,6 @@ func StartTunnel(flow PacketFlow, cfg *HyConfig) (*MogoHysteria, error) {
 	flow.Log("after create stack")
 
 	//err = mogoHysteria.serverTun()
-
-	if mogoHysteria.IP == "" {
-		mogoHysteria.IP = "10.20.0.1"
-	}
 	iosDefaultMogoHysteria = mogoHysteria
 	return mogoHysteria, nil
 }
@@ -186,6 +185,15 @@ func (mhy *MogoHysteria) StopTunnel() error {
 	}
 
 	return nil
+}
+
+// Send 是 tun 设备向 Hysteria 服务器发送 IP 包数据。
+// ios 平台须主动调用 Send()。Android 平台使用 StartTunnelWithAndroidTunFd() 自动调用。
+func (mhy *MogoHysteria) Send(data []byte) {
+	buf := make([]byte, len(data))
+	copy(buf, data)
+	//atomic.AddInt64(&waitSendCount, 1)
+	mhy.waitSend <- buf // tunReadWriter.Read() 将从 waitSend 读取数据
 }
 
 func Free() {
