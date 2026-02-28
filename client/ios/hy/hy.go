@@ -38,7 +38,7 @@ type PacketFlow interface {
 	// WritePacket 向 tun 设备写入 IP 包。
 	WritePacket(packet []byte)
 	// ReadPacket 从 tun 设备读取 IP 包。
-	// 应该已废弃使用。ios 须主动调用 Send() 将 IP 包发送到 hy 服务器。 Android 须额外实现从 tun 读取 IP 包并调用 Send()
+	// Deprecated: ios 须主动调用 Send() 将 IP 包发送到 hy 服务器。 Android 须额外实现从 tun 读取 IP 包并调用 Send()
 	ReadPacket() []byte
 	Log(msg string)
 }
@@ -170,18 +170,6 @@ func flushWaiting() {
 	}
 }
 
-//func BatchSend(data [][]byte) error {
-//	var err error
-//	for _, d := range data {
-//		e := Send(d)
-//		if err != nil {
-//			err = e
-//			return err
-//		}
-//	}
-//	return err
-//}
-
 func (mhy *MogoHysteria) StopTunnel() error {
 	//go defaultMogoHysteria.stack.Close()
 	if mhy == nil {
@@ -206,31 +194,6 @@ func (mhy *MogoHysteria) StopTunnel() error {
 	flushWaiting()
 
 	return nil
-}
-
-//var log = make(chan string)
-//
-//func Log() string {
-//	return <-log
-//}
-
-func logLoop(flow PacketFlow) {
-	for {
-		time.Sleep(time.Second)
-		if defaultMogoHysteria == nil {
-			flow.Log("mogo hysteria nil")
-		}
-		if defaultMogoHysteria.flow == nil {
-			flow.Log("package flow nil")
-		}
-		if defaultMogoHysteria.client == nil {
-			flow.Log("mogo hysteria client nil")
-		}
-		if defaultMogoHysteria.stack == nil {
-			flow.Log("mogo hysteria stack nil")
-		}
-		flow.Log("mogo hysteria")
-	}
 }
 
 func Free() {

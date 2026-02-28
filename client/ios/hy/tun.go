@@ -21,7 +21,7 @@ func (mhy *MogoHysteria) createStack() error {
 	// - 从 TUN 设备读取 IP 数据包（来自操作系统的网络流量）
 	// - 将数据包传递给 gVisor 网络栈进行处理
 	// - 将处理后的数据包写回 TUN 设备
-	ep, err := iobased.New(&tunReadWriter{}, defaultMTU, offset)
+	endpoint, err := iobased.New(&tunReadWriter{}, defaultMTU, offset)
 	if err != nil {
 		return fmt.Errorf("failed to new Endpoint: %w", err)
 	}
@@ -30,7 +30,7 @@ func (mhy *MogoHysteria) createStack() error {
 	opts = append(opts, option.WithTCPSendBufferSize(65536))
 	opts = append(opts, option.WithTCPReceiveBufferSize(65536))
 	mhy.stack, err = core.CreateStack(&core.Config{
-		LinkEndpoint:     ep,
+		LinkEndpoint:     endpoint,
 		TransportHandler: mhy,
 		Options:          opts,
 	})
@@ -48,8 +48,7 @@ func (mhy *MogoHysteria) HandleUDP(conn adapter.UDPConn) {
 	go mhy.handleUDP(conn)
 }
 
-// 没用到，可删
-func (mhy *MogoHysteria) serverTun() error {
+//func (mhy *MogoHysteria) serverTun() error {
 	//go func() {
 	//	for {
 	//		if mhy.client.IsClose() {
@@ -126,5 +125,5 @@ func (mhy *MogoHysteria) serverTun() error {
 	//	}
 	//}()
 
-	return nil
-}
+// 	return nil
+// }
