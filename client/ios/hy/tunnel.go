@@ -50,10 +50,12 @@ const (
 // - 将数据包传递给 gVisor 网络栈进行处理
 // - 将处理后的数据包写回 TUN 设备
 type device struct {
+	// iobased.Endpoint 实现了 stack.LinkEndpoint 接口
 	*iobased.Endpoint
 	*tunnel
 }
 
+var _ stack.LinkEndpoint = (*iobased.Endpoint)(nil)
 var _ stack.LinkEndpoint = (*device)(nil)
 
 // warpTun 创建一个 device, 其中内嵌 stack.LinkEndpoint(.*Endpoint)
