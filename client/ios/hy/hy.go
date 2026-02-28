@@ -73,7 +73,7 @@ func StartTunnel(flow PacketFlow, cfg *HyConfig) (*MogoHysteria, error) {
 	//} else {
 	//	debug.SetMemoryLimit(20 * 1 << 20)
 	//}
-	flow.Log("start tunnel...")
+	flow.Log("start tunnel ...")
 	if len(cfg.Server) == 0 {
 		return nil, errors.New("configured server is empty")
 	}
@@ -176,7 +176,7 @@ func (mhy *MogoHysteria) StopTunnel() error {
 		return errors.New("mogo hysteria stack nil")
 	}
 
-	mhy.flow.Log("start stop")
+	mhy.flow.Log("stop tunnel ...")
 	mhy.client.Close()
 	go mhy.stack.Close()
 
