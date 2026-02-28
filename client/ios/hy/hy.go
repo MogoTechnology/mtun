@@ -18,6 +18,11 @@ type MogoHysteria struct {
 	stack  *stack.Stack
 	flow   PacketFlow
 	IP     string
+
+	// waitSend 是从 tun 到 server 发送 IP 包数据的通道。
+	// waitSend 由 Send() 写入，(tunReadWriter).Read() 读取
+	// 其数据是IP包。
+	waitSend chan<- []byte
 }
 
 var defaultMogoHysteria *MogoHysteria
@@ -129,8 +134,11 @@ func StartTunnel(flow PacketFlow, cfg *HyConfig) (*MogoHysteria, error) {
 
 	//defaultMogoHysteria.IP = hyClient.ClientIP()
 
+	waitSend := make(chan []byte, 1024)
+	defaultMogoHysteria.waitSend = waitSend
+
 	flow.Log("before create stack")
-	err = defaultMogoHysteria.createStack()
+	err = defaultMogoHysteria.createStack(waitSend)
 	if err != nil {
 		err = fmt.Errorf("create stack error: %w", err)
 		flow.Log(err.Error())
@@ -158,18 +166,6 @@ func Send(data []byte) error {
 	return nil
 }
 
-// flushWaiting 清空 waitSend 中残留的数据，避免影响下个 tunnel.
-// 因为 waitSend 是全局的，StopTunnel() 后残留数据会影响到新的 tunnel.
-func flushWaiting() {
-	for {
-		select {
-		case <-waitSend:
-		default:
-			return
-		}
-	}
-}
-
 func (mhy *MogoHysteria) StopTunnel() error {
 	//go defaultMogoHysteria.stack.Close()
 	if mhy == nil {
@@ -191,7 +187,6 @@ func (mhy *MogoHysteria) StopTunnel() error {
 	if androidFlow, ok := mhy.flow.(*androidPacketFlow); ok {
 		androidFlow.close()
 	}
-	flushWaiting()
 
 	return nil
 }
