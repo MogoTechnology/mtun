@@ -6,34 +6,12 @@ import (
 	"github.com/xjasonlyu/tun2socks/v2/core/option"
 )
 
-// DefaultDevice 没用到，总是为 nil
-// var DefaultDevice stack.LinkEndpoint
-
 func (mhy *MogoHysteria) createStack() error {
-	// DefaultDevice 没用到，总是为 nil
-	if true { // DefaultDevice == nil {
-		device, err := warpTun()
-		if err != nil {
-			return err
-		}
-
-		mhy.device = device
-	} else {
-		// DefaultDevice 没用到，总是为 nil
-		// mhy.device = DefaultDevice
+	device, err := warpTun()
+	if err != nil {
+		return err
 	}
-	//
-	var err error
-	//mhy.device, err = tun.Open("utun123", 1500)
-	//if err != nil {
-	//	return err
-	//}
-
-	//dialer, err := proxy.NewSocks5("127.0.0.1:8123", "", "")
-	//if err != nil {
-	//	return err
-	//}
-	//proxy.SetDialer(dialer)
+	mhy.device = device
 
 	var opts []option.Option
 	opts = append(opts, option.WithTCPSendBufferSize(65536))
