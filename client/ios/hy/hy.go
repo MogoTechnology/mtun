@@ -164,7 +164,6 @@ func Send(data []byte) error {
 }
 
 func (mhy *MogoHysteria) StopTunnel() error {
-	//go defaultMogoHysteria.stack.Close()
 	if mhy == nil {
 		return errors.New("mogo hysteria nil")
 	}
@@ -180,6 +179,7 @@ func (mhy *MogoHysteria) StopTunnel() error {
 
 	mhy.flow.Log("start stop")
 	mhy.client.Close()
+	go mhy.stack.Close()
 
 	if androidFlow, ok := mhy.flow.(*androidPacketFlow); ok {
 		androidFlow.close()
