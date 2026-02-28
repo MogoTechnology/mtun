@@ -11,13 +11,12 @@ func (mhy *MogoHysteria) createStack() error {
 	if err != nil {
 		return err
 	}
-	mhy.device = device
 
 	var opts []option.Option
 	opts = append(opts, option.WithTCPSendBufferSize(65536))
 	opts = append(opts, option.WithTCPReceiveBufferSize(65536))
 	mhy.stack, err = core.CreateStack(&core.Config{
-		LinkEndpoint:     mhy.device,
+		LinkEndpoint:     device, // TODO: rename device to linkEndpoint
 		TransportHandler: mhy,
 		Options:          opts,
 	})

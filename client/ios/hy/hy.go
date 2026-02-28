@@ -15,7 +15,6 @@ import (
 
 type MogoHysteria struct {
 	client client.Client
-	device stack.LinkEndpoint
 	stack  *stack.Stack
 	flow   PacketFlow
 	IP     string
