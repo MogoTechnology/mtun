@@ -1,22 +1,36 @@
 package hy
 
 import (
+	"fmt"
+
 	"github.com/xjasonlyu/tun2socks/v2/core"
 	"github.com/xjasonlyu/tun2socks/v2/core/adapter"
+	"github.com/xjasonlyu/tun2socks/v2/core/device/iobased"
 	"github.com/xjasonlyu/tun2socks/v2/core/option"
 )
 
+const (
+	offset     = 0
+	defaultMTU = 1500
+)
+
 func (mhy *MogoHysteria) createStack() error {
-	device, err := warpTun()
+	// 创建 Endpoint, 实际读写在 tunReadWriter. 
+	// Endpoint 实现了 stack.LinkEndpoint 接口。
+	// 在 tun2socks 中， LinkEndpoint 的实现通常是一个 TUN 设备包装器，它：
+	// - 从 TUN 设备读取 IP 数据包（来自操作系统的网络流量）
+	// - 将数据包传递给 gVisor 网络栈进行处理
+	// - 将处理后的数据包写回 TUN 设备
+	ep, err := iobased.New(&tunReadWriter{}, defaultMTU, offset)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to new Endpoint: %w", err)
 	}
 
 	var opts []option.Option
 	opts = append(opts, option.WithTCPSendBufferSize(65536))
 	opts = append(opts, option.WithTCPReceiveBufferSize(65536))
 	mhy.stack, err = core.CreateStack(&core.Config{
-		LinkEndpoint:     device, // TODO: rename device to linkEndpoint
+		LinkEndpoint:     ep,
 		TransportHandler: mhy,
 		Options:          opts,
 	})
