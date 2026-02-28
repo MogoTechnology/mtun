@@ -8,20 +8,19 @@ import (
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
 )
 
-// tunnel 将 tun 设备封装成 io.ReadWriter, 从 waitSend 读取数据，写入到 defaultMogoHysteria.flow
+// tunReadWriter 将 tun 设备封装成 io.ReadWriter, 从 waitSend 读取数据，写入到 defaultMogoHysteria.flow
 // 其数据是IP包。
-// TODO: rename it to tunReadWriter?
-type tunnel struct{}
+type tunReadWriter struct{}
 
-var _ io.ReadWriter = (*tunnel)(nil)
+var _ io.ReadWriter = (*tunReadWriter)(nil)
 
 // waitSend 是从 tun 到 server 发送 IP 包数据的通道。
-// waitSend 由 Send() 写入，(tunnel).Read() 读取，也即 (*device).Read()
+// waitSend 由 Send() 写入，(tunReadWriter).Read() 读取，也即 (*device).Read()
 // 其数据是IP包。
 var waitSend = make(chan []byte, 1024)
 
 // Read implements io.ReadWriter.Read.
-func (t tunnel) Read(p []byte) (n int, err error) {
+func (t tunReadWriter) Read(p []byte) (n int, err error) {
 	b := <-waitSend
 	//atomic.AddInt64(&waitSendCount, -1)
 	n = copy(p, b)
@@ -30,8 +29,8 @@ func (t tunnel) Read(p []byte) (n int, err error) {
 }
 
 // Write implements io.ReadWriter.Write.
-func (t tunnel) Write(p []byte) (n int, err error) {
-	// TODO: add flow WritePacket() into tunnel
+func (t tunReadWriter) Write(p []byte) (n int, err error) {
+	// TODO: add flow WritePacket() into tunReadWriter
 	if defaultMogoHysteria.flow != nil {
 		defaultMogoHysteria.flow.WritePacket(p)
 	}
@@ -52,7 +51,7 @@ const (
 type device struct {
 	// iobased.Endpoint 实现了 stack.LinkEndpoint 接口
 	*iobased.Endpoint
-	*tunnel
+	*tunReadWriter
 }
 
 var _ stack.LinkEndpoint = (*iobased.Endpoint)(nil)
@@ -62,12 +61,12 @@ var _ stack.LinkEndpoint = (*device)(nil)
 // device 是空的，实际读写在 DefaultTunnel。
 func warpTun() (*device, error) {
 	d := &device{}
-	// TODO: use tunReadWriter(tunnel) instead of device d
+	// TODO: use tunReadWriter instead of device d
 	ep, err := iobased.New(d, defaultMTU, offset)
 	if err != nil {
 		return nil, fmt.Errorf("failed to new EndPoint: %w", err)
 	}
 	d.Endpoint = ep
-	d.tunnel = &tunnel{}
+	d.tunReadWriter = &tunReadWriter{}
 	return d, nil
 }

@@ -116,5 +116,5 @@ func (mhy *MogoHysteria) send(data []byte) {
 	buf := make([]byte, len(data))
 	copy(buf, data)
 	//atomic.AddInt64(&waitSendCount, 1)
-	waitSend <- buf // tunnel.Read() 将从 waitSend 读取数据
+	waitSend <- buf // tunReadWriter.Read() 将从 waitSend 读取数据
 }
