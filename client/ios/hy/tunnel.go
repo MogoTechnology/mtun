@@ -8,13 +8,14 @@ import (
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
 )
 
-// tunnel 实现了 io.ReadWriter, 从 waitSend 读取数据，写入到 defaultMogoHysteria.flow
+// tunnel 将 tun 设备封装成 io.ReadWriter, 从 waitSend 读取数据，写入到 defaultMogoHysteria.flow
 // 其数据是IP包。
 // TODO: rename it to tunReadWriter?
 type tunnel struct{}
 
 var _ io.ReadWriter = (*tunnel)(nil)
 
+// waitSend 是从 tun 到 server 发送 IP 包数据的通道。
 // waitSend 由 Send() 写入，(tunnel).Read() 读取，也即 (*device).Read()
 // 其数据是IP包。
 var waitSend = make(chan []byte, 1024)
@@ -59,6 +60,7 @@ var _ stack.LinkEndpoint = (*device)(nil)
 // device 是空的，实际读写在 DefaultTunnel。
 func warpTun() (*device, error) {
 	d := &device{}
+	// TODO: use tunReadWriter(tunnel) instead of device d
 	ep, err := iobased.New(d, defaultMTU, offset)
 	if err != nil {
 		return nil, fmt.Errorf("failed to new EndPoint: %w", err)
