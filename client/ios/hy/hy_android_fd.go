@@ -102,15 +102,15 @@ func (mhy *MogoHysteria) readFromTunAndSend(tunFile *os.File, closed *atomic.Boo
 		if closed.Load() {
 			return
 		}
-		mhy.send(buf[:n])
+		mhy.Send(buf[:n])
 	}
 }
 
-// send 是 tun 设备向 Hysteria 服务器发送 IP 包数据。
-// ios 平台须主动通过 Send()调用。Android 平台使用 StartTunnelWithAndroidTunFd() 自动调用, 直接从 tun fd 读取 IP 包数据。
-func (mhy *MogoHysteria) send(data []byte) {
+// Send 是 tun 设备向 Hysteria 服务器发送 IP 包数据。
+// ios 平台须主动调用 Send()。Android 平台使用 StartTunnelWithAndroidTunFd() 自动调用。
+func (mhy *MogoHysteria) Send(data []byte) {
 	// TODO(jinq): check closed
-	// if defaultMogoHysteria.client.IsClose() {
+	// if mhy.client.IsClose() {
 	// 	return errors.New("closed")
 	// }
 	buf := make([]byte, len(data))

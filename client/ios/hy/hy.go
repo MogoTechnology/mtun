@@ -25,8 +25,10 @@ type MogoHysteria struct {
 	waitSend chan<- []byte
 }
 
-var defaultMogoHysteria *MogoHysteria
 var _ adapter.TransportHandler = (*MogoHysteria)(nil)
+
+// 仅用于 ios Send().
+var iosDefaultMogoHysteria *MogoHysteria
 
 type HyConfig struct {
 	Server      string
@@ -86,10 +88,6 @@ func StartTunnel(flow PacketFlow, cfg *HyConfig) (*MogoHysteria, error) {
 	//	cfg.Bandwidth = "80mbps"
 	//}
 
-	defaultMogoHysteria = &MogoHysteria{
-		flow: flow,
-	}
-
 	config := &clientConfig{
 		//Server: "47.95.31.127:7865",
 		//Server: "192.144.225.219:4433",
@@ -130,15 +128,15 @@ func StartTunnel(flow PacketFlow, cfg *HyConfig) (*MogoHysteria, error) {
 	}
 	flow.Log("after create client")
 
-	defaultMogoHysteria.client = hyClient
-
-	//defaultMogoHysteria.IP = hyClient.ClientIP()
-
 	waitSend := make(chan []byte, 1024)
-	defaultMogoHysteria.waitSend = waitSend
+	mogoHysteria := &MogoHysteria{
+		flow: flow,
+		client: hyClient,
+		waitSend: waitSend,
+	}
 
 	flow.Log("before create stack")
-	err = defaultMogoHysteria.createStack(waitSend)
+	err = mogoHysteria.createStack(waitSend)
 	if err != nil {
 		err = fmt.Errorf("create stack error: %w", err)
 		flow.Log(err.Error())
@@ -146,23 +144,22 @@ func StartTunnel(flow PacketFlow, cfg *HyConfig) (*MogoHysteria, error) {
 	}
 	flow.Log("after create stack")
 
-	//err = defaultMogoHysteria.serverTun()
+	//err = mogoHysteria.serverTun()
 
-	//go Free()
-
-	//go logLoop(flow)
-
-	if defaultMogoHysteria.IP == "" {
-		defaultMogoHysteria.IP = "10.20.0.1"
+	if mogoHysteria.IP == "" {
+		mogoHysteria.IP = "10.20.0.1"
 	}
-	return defaultMogoHysteria, nil
+	iosDefaultMogoHysteria = mogoHysteria
+	return mogoHysteria, nil
 }
 
 // Send 是 tun 设备向 Hysteria 服务器发送 IP 包数据。
 // 仅用于 ios 平台调用。
+// Deprecated: 请改用 (*MogoHysteria).Send()
 func Send(data []byte) error {
-	// TODO: rename defaultMogoHysteria to iosDefaultMogoHysteria
-	defaultMogoHysteria.send(data)
+	if iosDefaultMogoHysteria != nil {
+		iosDefaultMogoHysteria.Send(data)
+	}
 	return nil
 }
 

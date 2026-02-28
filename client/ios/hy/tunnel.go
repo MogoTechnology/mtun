@@ -4,11 +4,11 @@ import (
 	"io"
 )
 
-// tunReadWriter 将 tun 设备封装成 io.ReadWriter, 从 waitSend 读取数据，写入到 defaultMogoHysteria.flow
+// tunReadWriter 将 tun 设备封装成 io.ReadWriter, 从 waitSend 读取数据，写入到 MogoHysteria.flow
 // 其数据是IP包。
-type tunReadWriter struct{
-	waitSend <-chan []byte;
-	packetWriter packetWriter;
+type tunReadWriter struct {
+	waitSend     <-chan []byte
+	packetWriter packetWriter
 }
 
 type packetWriter interface {
@@ -36,9 +36,6 @@ func (t *tunReadWriter) Read(p []byte) (n int, err error) {
 
 // Write implements io.ReadWriter.Write.
 func (t *tunReadWriter) Write(p []byte) (n int, err error) {
-	// TODO: add flow WritePacket() into tunReadWriter
-	if defaultMogoHysteria.flow != nil {
-		defaultMogoHysteria.flow.WritePacket(p)
-	}
+	t.packetWriter.WritePacket(p)
 	return len(p), nil
 }
