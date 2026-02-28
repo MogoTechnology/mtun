@@ -51,7 +51,6 @@ const (
 type device struct {
 	// iobased.Endpoint 实现了 stack.LinkEndpoint 接口
 	*iobased.Endpoint
-	*tunReadWriter
 }
 
 var _ stack.LinkEndpoint = (*iobased.Endpoint)(nil)
@@ -60,13 +59,12 @@ var _ stack.LinkEndpoint = (*device)(nil)
 // warpTun 创建一个 device, 其中内嵌 stack.LinkEndpoint(.*Endpoint)
 // device 是空的，实际读写在 DefaultTunnel。
 func warpTun() (*device, error) {
-	d := &device{}
 	// TODO: use tunReadWriter instead of device d
-	ep, err := iobased.New(d, defaultMTU, offset)
+	ep, err := iobased.New(&tunReadWriter{}, defaultMTU, offset)
 	if err != nil {
 		return nil, fmt.Errorf("failed to new EndPoint: %w", err)
 	}
-	d.Endpoint = ep
-	d.tunReadWriter = &tunReadWriter{}
-	return d, nil
+	return &device{
+		Endpoint: ep,
+	}, nil
 }
