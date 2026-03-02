@@ -1,65 +1,41 @@
 package hy
 
 import (
-	"github.com/xjasonlyu/tun2socks/v2/core/device/iobased"
-	"gvisor.dev/gvisor/pkg/tcpip/stack"
+	"io"
 )
 
-type tunnel struct{}
-
-// waitSend 由 Send() 写入，(tunnel).Read() 读取，也即 (*device).Read()
+// tunReadWriter 将 tun 设备封装成 io.ReadWriter, 从 waitSend 读取数据，写入到 MogoHysteria.flow
 // 其数据是IP包。
-var waitSend = make(chan []byte, 1024)
+type tunReadWriter struct {
+	waitSend     <-chan []byte
+	packetWriter packetWriter
+}
 
-// waitReceive 应该没用。waitReceive 没人写入。
-var waitReceive = make(chan []byte, 1024)
+type packetWriter interface {
+	WritePacket(packet []byte)
+}
 
-// DefaultTunnel 从 waitSend 读取数据，写入到 defaultMogoHysteria.flow
-var DefaultTunnel = tunnel{}
+var _ io.ReadWriter = (*tunReadWriter)(nil)
 
-func (t tunnel) Read(p []byte) (n int, err error) {
-	b := <-waitSend
+// newTunReadWriter 创建一个 tunReadWriter, 它从 waitSend 读取数据，写入到 packetWriter。
+func newTunReadWriter(waitSend <-chan []byte, packetWriter packetWriter) *tunReadWriter {
+	return &tunReadWriter{
+		waitSend:     waitSend,
+		packetWriter: packetWriter,
+	}
+}
+
+// Read implements io.ReadWriter.Read.
+func (t *tunReadWriter) Read(p []byte) (n int, err error) {
+	b := <-t.waitSend
 	//atomic.AddInt64(&waitSendCount, -1)
 	n = copy(p, b)
 	//defaultPool.Put(b)
 	return n, nil
 }
 
-func (t tunnel) Write(p []byte) (n int, err error) {
-	if defaultMogoHysteria.flow != nil {
-		defaultMogoHysteria.flow.WritePacket(p)
-	}
+// Write implements io.ReadWriter.Write.
+func (t *tunReadWriter) Write(p []byte) (n int, err error) {
+	t.packetWriter.WritePacket(p)
 	return len(p), nil
-}
-
-const (
-	offset     = 0
-	defaultMTU = 1500
-)
-
-type device struct {
-	*iobased.Endpoint
-}
-
-var _ stack.LinkEndpoint = (*device)(nil)
-
-// warpTun 创建一个 device, 其中内嵌 stack.LinkEndpoint(.*Endpoint)
-// device 是空的，实际读写在 DefaultTunnel。
-func warpTun() (*device, error) {
-	d := &device{}
-	ep, err := iobased.New(d, defaultMTU, offset)
-	if err != nil {
-		return nil, err
-	}
-	d.Endpoint = ep
-	return d, nil
-}
-
-func (d *device) Write(b []byte) (int, error) {
-	return DefaultTunnel.Write(b)
-}
-
-func (d *device) Read(b []byte) (int, error) {
-	n, err := DefaultTunnel.Read(b)
-	return n, err
 }

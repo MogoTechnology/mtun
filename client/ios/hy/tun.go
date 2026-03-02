@@ -1,45 +1,37 @@
 package hy
 
 import (
+	"fmt"
+
 	"github.com/xjasonlyu/tun2socks/v2/core"
 	"github.com/xjasonlyu/tun2socks/v2/core/adapter"
+	"github.com/xjasonlyu/tun2socks/v2/core/device/iobased"
 	"github.com/xjasonlyu/tun2socks/v2/core/option"
 )
 
-// DefaultDevice 没用到，总是为 nil
-// var DefaultDevice stack.LinkEndpoint
+const (
+	offset     = 0
+	defaultMTU = 1500
+)
 
-func (mhy *MogoHysteria) serve() error {
-	// DefaultDevice 没用到，总是为 nil
-	if true { // DefaultDevice == nil {
-		device, err := warpTun()
-		if err != nil {
-			return err
-		}
-
-		mhy.device = device
-	} else {
-		// DefaultDevice 没用到，总是为 nil
-		// mhy.device = DefaultDevice
+func (mhy *MogoHysteria) createStack(waitSend <-chan []byte) error {
+	// 创建 Endpoint, 实际读写在 tunReadWriter. 
+	// Endpoint 实现了 stack.LinkEndpoint 接口。
+	// 在 tun2socks 中， LinkEndpoint 的实现通常是一个 TUN 设备包装器，它：
+	// - 从 TUN 设备读取 IP 数据包（来自操作系统的网络流量）
+	// - 将数据包传递给 gVisor 网络栈进行处理
+	// - 将处理后的数据包写回 TUN 设备
+	tunReadWriter := newTunReadWriter(waitSend, mhy.flow)
+	endpoint, err := iobased.New(tunReadWriter, defaultMTU, offset)
+	if err != nil {
+		return fmt.Errorf("failed to new Endpoint: %w", err)
 	}
-	//
-	var err error
-	//mhy.device, err = tun.Open("utun123", 1500)
-	//if err != nil {
-	//	return err
-	//}
-
-	//dialer, err := proxy.NewSocks5("127.0.0.1:8123", "", "")
-	//if err != nil {
-	//	return err
-	//}
-	//proxy.SetDialer(dialer)
 
 	var opts []option.Option
 	opts = append(opts, option.WithTCPSendBufferSize(65536))
 	opts = append(opts, option.WithTCPReceiveBufferSize(65536))
 	mhy.stack, err = core.CreateStack(&core.Config{
-		LinkEndpoint:     mhy.device,
+		LinkEndpoint:     endpoint,
 		TransportHandler: mhy,
 		Options:          opts,
 	})
@@ -57,8 +49,7 @@ func (mhy *MogoHysteria) HandleUDP(conn adapter.UDPConn) {
 	go mhy.handleUDP(conn)
 }
 
-// 没用到，可删
-func (mhy *MogoHysteria) serverTun() error {
+//func (mhy *MogoHysteria) serverTun() error {
 	//go func() {
 	//	for {
 	//		if mhy.client.IsClose() {
@@ -135,5 +126,5 @@ func (mhy *MogoHysteria) serverTun() error {
 	//	}
 	//}()
 
-	return nil
-}
+// 	return nil
+// }

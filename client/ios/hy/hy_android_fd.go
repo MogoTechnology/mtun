@@ -16,17 +16,22 @@ import (
 func StartTunnelWithAndroidTunFd(fd int, cfg *HyConfig) (*MogoHysteria, error) {
 	tunFile, err := makeTunFile(fd)
 	if err != nil {
-		return defaultMogoHysteria, errors.New("failed to create the TUN device")
+		return nil, errors.New("failed to create the TUN device")
 	}
 
 	androidPacketFlow := &androidPacketFlow{
 		tunFile: tunFile,
 	}
 
-	// ReadPacket() 已废弃，须开启协程读取 tun 并调用 Send()
-	go readFromTunAndSend(tunFile, &androidPacketFlow.closed)
+	mogoHysteria, err := StartTunnel(androidPacketFlow, cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to start tunnel: %w", err)
+	}
 
-	return StartTunnel(androidPacketFlow, cfg)
+	// ReadPacket() 已废弃，须开启协程读取 tun 并调用 Send()
+	go mogoHysteria.readFromTunAndSend(tunFile, &androidPacketFlow.closed)
+
+	return mogoHysteria, nil
 }
 
 type androidPacketFlow struct {
@@ -79,7 +84,8 @@ func makeTunFile(fd int) (*os.File, error) {
 
 // readFromTunAndSend 从 tun 文件读取 IP 包数据，并调用 Send() 发送。
 // 读取出错时会退出。
-func readFromTunAndSend(tunFile *os.File, closed *atomic.Bool) {
+// 仅用于 Android 系统，其他系统请使用 StartTunnel()。
+func (mhy *MogoHysteria) readFromTunAndSend(tunFile *os.File, closed *atomic.Bool) {
 	buf := buffer.Get(buffer.RelayBufferSize)
 	defer buffer.Put(buf)
 
@@ -96,10 +102,6 @@ func readFromTunAndSend(tunFile *os.File, closed *atomic.Bool) {
 		if closed.Load() {
 			return
 		}
-		err = Send(buf[:n])
-		if err != nil {
-			fmt.Println("hy closed")
-			return
-		}
+		mhy.Send(buf[:n])
 	}
 }

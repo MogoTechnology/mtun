@@ -15,14 +15,19 @@ import (
 
 type MogoHysteria struct {
 	client client.Client
-	device stack.LinkEndpoint
 	stack  *stack.Stack
 	flow   PacketFlow
-	IP     string
+
+	// waitSend 是从 tun 到 server 发送 IP 包数据的通道。
+	// waitSend 由 Send() 写入，(tunReadWriter).Read() 读取
+	// 其数据是IP包。
+	waitSend chan<- []byte
 }
 
-var defaultMogoHysteria *MogoHysteria
 var _ adapter.TransportHandler = (*MogoHysteria)(nil)
+
+// 仅用于 ios Send().
+var iosDefaultMogoHysteria *MogoHysteria
 
 type HyConfig struct {
 	Server      string
@@ -39,7 +44,7 @@ type PacketFlow interface {
 	// WritePacket 向 tun 设备写入 IP 包。
 	WritePacket(packet []byte)
 	// ReadPacket 从 tun 设备读取 IP 包。
-	// 应该已废弃使用。ios 须主动调用 Send() 将 IP 包发送到 hy 服务器。 Android 须额外实现从 tun 读取 IP 包并调用 Send()
+	// Deprecated: ios 须主动调用 Send() 将 IP 包发送到 hy 服务器。 Android 须额外实现从 tun 读取 IP 包并调用 Send()
 	ReadPacket() []byte
 	Log(msg string)
 }
@@ -48,6 +53,10 @@ type PacketFlow interface {
 //
 // Android 系统可使用 StartTunnelWithAndroidTunFd(), 更简单。
 func StartTunnel(flow PacketFlow, cfg *HyConfig) (*MogoHysteria, error) {
+	if flow == nil {
+		return nil, errors.New("package flow is nil")
+	}
+
 	//cfg = &HyConfig{
 	//	//Server: "127.0.0.1",
 	//	Server: "47.101.36.120",
@@ -64,27 +73,23 @@ func StartTunnel(flow PacketFlow, cfg *HyConfig) (*MogoHysteria, error) {
 	//} else {
 	//	debug.SetMemoryLimit(20 * 1 << 20)
 	//}
-	flow.Log("start tunnel...")
+	flow.Log("start tunnel ...")
 	if len(cfg.Server) == 0 {
-		return defaultMogoHysteria, errors.New("configured server is empty")
+		return nil, errors.New("configured server is empty")
 	}
 	if cfg.Port == 0 {
-		return defaultMogoHysteria, errors.New("configured port is 0")
+		return nil, errors.New("configured port is 0")
 	}
 	if len(cfg.Uuid) == 0 {
-		return defaultMogoHysteria, errors.New("configured uuid is empty")
+		return nil, errors.New("configured uuid is empty")
 	}
 	if len(cfg.Obfs) != 0 && len(cfg.Obfs) < 4 {
-		return defaultMogoHysteria, errors.New("configured obfs is too short")
+		return nil, errors.New("configured obfs is too short")
 	}
 
 	//if cfg.Bandwidth == "" {
 	//	cfg.Bandwidth = "80mbps"
 	//}
-
-	defaultMogoHysteria = &MogoHysteria{
-		flow: flow,
-	}
 
 	config := &clientConfig{
 		//Server: "47.95.31.127:7865",
@@ -122,86 +127,42 @@ func StartTunnel(flow PacketFlow, cfg *HyConfig) (*MogoHysteria, error) {
 	if err != nil {
 		err = fmt.Errorf("create client error: %w", err)
 		flow.Log(err.Error())
-		return defaultMogoHysteria, err
+		return nil, err
 	}
 	flow.Log("after create client")
 
-	defaultMogoHysteria.client = hyClient
-
-	//defaultMogoHysteria.IP = hyClient.ClientIP()
+	waitSend := make(chan []byte, 1024)
+	mogoHysteria := &MogoHysteria{
+		flow:     flow,
+		client:   hyClient,
+		waitSend: waitSend,
+	}
 
 	flow.Log("before create stack")
-	err = defaultMogoHysteria.serve()
+	err = mogoHysteria.createStack(waitSend)
+	if err != nil {
+		err = fmt.Errorf("create stack error: %w", err)
+		flow.Log(err.Error())
+		return nil, err
+	}
 	flow.Log("after create stack")
 
-	//err = defaultMogoHysteria.serverTun()
-
-	//go Free()
-
-	//go logLoop(flow)
-
-	if defaultMogoHysteria.IP == "" {
-		defaultMogoHysteria.IP = "10.20.0.1"
-	}
-	return defaultMogoHysteria, err
+	//err = mogoHysteria.serverTun()
+	iosDefaultMogoHysteria = mogoHysteria
+	return mogoHysteria, nil
 }
 
 // Send 是 tun 设备向 Hysteria 服务器发送 IP 包数据。
-// ios 平台须主动调用。Android 平台使用 StartTunnelWithAndroidTunFd() 自动调用, 直接从 tun fd 读取 IP 包数据。
+// 仅用于 ios 平台调用。
+// Deprecated: 请改用 (*MogoHysteria).Send()
 func Send(data []byte) error {
-	// TODO(jinq): check closed
-	// if defaultMogoHysteria.client.IsClose() {
-	// 	return errors.New("closed")
-	// }
-	buf := make([]byte, len(data))
-	copy(buf, data)
-	//atomic.AddInt64(&waitSendCount, 1)
-	waitSend <- buf  // tunnel.Read() 将从 waitSend 读取数据
+	if iosDefaultMogoHysteria != nil {
+		iosDefaultMogoHysteria.Send(data)
+	}
 	return nil
 }
 
-// flushWaiting 清空 waitSend 中残留的数据，避免影响下个 tunnel.
-// 因为 waitSend 是全局的，StopTunnel() 后残留数据会影响到新的 tunnel.
-func flushWaiting() {
-	for {
-		select {
-		case <-waitSend:
-		default:
-			return
-		}
-	}
-}
-
-//func BatchSend(data [][]byte) error {
-//	var err error
-//	for _, d := range data {
-//		e := Send(d)
-//		if err != nil {
-//			err = e
-//			return err
-//		}
-//	}
-//	return err
-//}
-
-// 应该没用。waitReceive 没人写入。
-func Receive() ([]byte, error) {
-	//timeoutTicker := time.NewTicker(time.Second * 10)
-	//defer timeoutTicker.Stop()
-	//select {
-	//case data := <-waitReceive:
-	//	return data, nil
-	//case <-timeoutTicker.C:
-	//	return nil, errors.New("timeout")
-	//}
-
-	data := <-waitReceive
-	//atomic.AddInt64(&waitReceiveCount, -1)
-	return data, nil
-}
-
 func (mhy *MogoHysteria) StopTunnel() error {
-	//go defaultMogoHysteria.stack.Close()
 	if mhy == nil {
 		return errors.New("mogo hysteria nil")
 	}
@@ -215,40 +176,24 @@ func (mhy *MogoHysteria) StopTunnel() error {
 		return errors.New("mogo hysteria stack nil")
 	}
 
-	mhy.flow.Log("start stop")
+	mhy.flow.Log("stop tunnel ...")
 	mhy.client.Close()
+	go mhy.stack.Close()
 
 	if androidFlow, ok := mhy.flow.(*androidPacketFlow); ok {
 		androidFlow.close()
 	}
-	flushWaiting()
 
 	return nil
 }
 
-//var log = make(chan string)
-//
-//func Log() string {
-//	return <-log
-//}
-
-func logLoop(flow PacketFlow) {
-	for {
-		time.Sleep(time.Second)
-		if defaultMogoHysteria == nil {
-			flow.Log("mogo hysteria nil")
-		}
-		if defaultMogoHysteria.flow == nil {
-			flow.Log("package flow nil")
-		}
-		if defaultMogoHysteria.client == nil {
-			flow.Log("mogo hysteria client nil")
-		}
-		if defaultMogoHysteria.stack == nil {
-			flow.Log("mogo hysteria stack nil")
-		}
-		flow.Log("mogo hysteria")
-	}
+// Send 是 tun 设备向 Hysteria 服务器发送 IP 包数据。
+// ios 平台须主动调用 Send()。Android 平台使用 StartTunnelWithAndroidTunFd() 自动调用。
+func (mhy *MogoHysteria) Send(data []byte) {
+	buf := make([]byte, len(data))
+	copy(buf, data)
+	//atomic.AddInt64(&waitSendCount, 1)
+	mhy.waitSend <- buf // tunReadWriter.Read() 将从 waitSend 读取数据
 }
 
 func Free() {
