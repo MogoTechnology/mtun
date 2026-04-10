@@ -180,7 +180,7 @@ func (c *clientConfig) fillConnFactory(hyConfig *client.Config) error {
 		if hyConfig.ServerAddr.Network() == "udphop" {
 			hopAddr := hyConfig.ServerAddr.(*udphop.UDPHopAddr)
 			newFunc = func(addr net.Addr) (net.PacketConn, error) {
-				return udphop.NewUDPHopPacketConn(hopAddr, c.Transport.UDP.HopInterval, so.ListenUDP)
+				return udphop.NewUDPHopPacketConn(hopAddr, udphop.HopIntervalConfig{Min: c.Transport.UDP.HopInterval, Max: c.Transport.UDP.HopInterval}, so.ListenUDP)
 			}
 		} else {
 			newFunc = func(addr net.Addr) (net.PacketConn, error) {
