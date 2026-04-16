@@ -20,6 +20,8 @@ export GODEBUG=gotypesalias=0
 export CGO_CFLAGS=-fstack-protector-strong
 export MACOSX_DEPLOYMENT_TARGET=12.0
 
+export JAVA_TOOL_OPTIONS = -Dfile.encoding=utf-8
+
 ios:
 	gomobile bind -v -target ios ./client/ios/hy ./ping ${OUTLINE_DIR_IOS}/platerrors ${OUTLINE_DIR_IOS}/tun2socks ${OUTLINE_DIR_IOS}
 #	 gomobile bind -target=ios -o goPing.xcframework ./ping    打包出goPing
