@@ -2,11 +2,13 @@ package main
 
 import (
 	"fmt"
-	"github.com/icechen128/mtun/client/ios/hy"
-	"github.com/xjasonlyu/tun2socks/v2/buffer"
-	"golang.zx2c4.com/wireguard/tun"
 	_ "net/http/pprof"
 	"runtime"
+
+	"github.com/icechen128/mtun/client/ios/hy"
+	"github.com/xjasonlyu/tun2socks/v2/buffer"
+	_ "golang.org/x/mobile/cmd/gomobile"
+	"golang.zx2c4.com/wireguard/tun"
 )
 
 //type RWDevice struct {
@@ -80,11 +82,11 @@ func main() {
 		Port:   443,
 		//Server: "127.0.0.1",
 		//Port:   443,
-		Uuid:               "ice",
-		Obfs:               "obfuscate mogo2022",
-		IsDebug:            false,
-		LimitMemory:        1000,
-		Bandwidth:          "80mbps",
+		Uuid:        "ice",
+		Obfs:        "obfuscate mogo2022",
+		IsDebug:     false,
+		LimitMemory: 1000,
+		Bandwidth:   "80mbps",
 	})
 	if err != nil {
 		fmt.Println(err)

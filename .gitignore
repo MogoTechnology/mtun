@@ -18,10 +18,10 @@
 # vendor/
 
 # Go workspace file
-go.work
 /.DS_Store
 /mtun
 /.idea
 /ping-sources.jar
 /*.aar
 /*.jar
+/.claude/settings.local.json
