@@ -37,4 +37,4 @@ Please note that MTun is provided as-is, without any warranty or guarantee. The 
 
 ## Contact
 
-If you have any questions, suggestions, or feedback regarding MTun, please contact our support team at [support@mogotech.net](mailto:support@mogotech.net) or visit our website [mogotech.net](https://mogotech.net).
+If you have any questions, suggestions, or feedback regarding MTun, please contact developer AT mogotech.net or visit our website [mogotech.net](https://mogotech.net).
