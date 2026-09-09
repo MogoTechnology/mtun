@@ -79,13 +79,16 @@ func Ping(url string, proto int64, timeout int64, count int64) *Result {
 }
 
 // 结果大概在 0-5 分，5分最优。有失败时会出现负分数结果。
+// 预设m格，1格对应k毫秒，m=5, k=140，通过(m*k - r0)/100的公式，计算出基础连接质量分值。
+// See: https://platospace.feishu.cn/wiki/NBcLwNzU1i8Egvk99mOc5dmDnJb
 func getScore(count int64, failCount int64, avePing int64) float64 {
+	const m, k = 5, 140
 	basicScore := float64(1)
-	if avePing < 1000 {
+	if avePing < m*k {
 		if avePing == 0 {
 			basicScore = 0
 		} else {
-			basicScore = float64(1000-avePing) / float64(200)
+			basicScore = float64(m*k-avePing) / float64(100)
 		}
 	}
 	score := basicScore
