@@ -89,6 +89,9 @@ func getScore(count int64, failCount int64, avePing int64) float64 {
 			basicScore = 0
 		} else {
 			basicScore = float64(m*k-avePing) / float64(100)
+			if basicScore > 5 {
+				basicScore = 5
+			}
 		}
 	}
 	score := basicScore
